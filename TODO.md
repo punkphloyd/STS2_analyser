@@ -9,8 +9,8 @@
 - [x] Discover .run files
 
 ## Phase 2 - Run Browser
-- [ ] Convert GUI to grid layout
-- [ ] Add results frame
+- [x] Convert GUI to grid layout
+- [x] Add results frame
 - [ ] Add run table (Treeview)
 - [ ] Parse run metadata
 - [ ] Populate run table

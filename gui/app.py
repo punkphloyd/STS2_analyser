@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from tkinter import filedialog
 from discovery.run_discovery import discover_runs
+from parsers.metadata_parser import parse_metadata
 
 
 class App(ctk.CTk):
@@ -145,14 +146,29 @@ class App(ctk.CTk):
             return
 
         run_files = discover_runs(self.directory.get())
-
+        metadata = [
+            parse_metadata(run)
+            for run in run_files
+        ]
+        metadata.sort(
+            key=lambda m: m.start_time,
+            reverse=True
+        )
         self.results.configure(state="normal")
 
         self.results.delete("1.0", "end")
 
-        for run in run_files:
-            self.results.insert("end", f"{run.name}\n")
+        for run_metadata in metadata:
+            result = "Win" if run_metadata.victory else "Loss"
+
+            self.results.insert(
+                "end",
+                f"{run_metadata.start_time:%Y-%m-%d} | "
+                f"{run_metadata.character:<12} | "
+                f"A{run_metadata.ascension} | "
+                f"{result}\n"
+            )
 
         self.results.configure(state="disabled")
 
-        self.status.set(f"Found {len(run_files)} run files.")
+        self.status.set(f"Found {len(metadata)} runs.")
