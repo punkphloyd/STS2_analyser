@@ -1,10 +1,12 @@
 import customtkinter as ctk
 from tkinter import filedialog, ttk
 from discovery.run_discovery import discover_runs
+from gui import filter_frame
 from parsers.metadata_parser import parse_metadata
 from data_models.run_metadata import RunMetadata
 from typing import cast
-
+from filters.filters import RunFilter
+from filters.run_filters import apply_filters
 
 class App(ctk.CTk):
     def __init__(self):
@@ -17,7 +19,7 @@ class App(ctk.CTk):
         ctk.set_default_color_theme("blue")
 
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure(4, weight=1)
 
         self.directory = ctk.StringVar()
         self.status = ctk.StringVar(value="Ready")
@@ -31,6 +33,9 @@ class App(ctk.CTk):
         self.character_label = None
         self.ascension_label = None
         self.result_label = None
+
+        # Current filter storage
+        self.current_filter = RunFilter()
 
         self.build_ui()
 
@@ -106,9 +111,46 @@ class App(ctk.CTk):
             sticky="se"
         )
 
+        filter_frame = ctk.CTkFrame(self)
+        filter_frame.grid(
+            row=3,
+            column=0,
+            padx=20,
+            pady=(0,10),
+            sticky="ew"
+        )
+
+        character_label = ctk.CTkLabel(
+            filter_frame,
+            text="Character: -",
+            font=("Segoe UI", 16, "bold")
+        )
+        character_label.pack(side="left", padx=(10,5))
+
+        self.character_filter = ctk.StringVar(value="All")
+
+        character_combo = ctk.CTkComboBox(
+            filter_frame,
+            values=[
+                "All",
+                "Ironclad",
+                "Silent",
+                "Regent",
+                "Necrobinder",
+                "Defect"
+            ],
+            variable=self.character_filter,
+            command=self.on_character_filter_changed,
+            width=160
+        )
+
+        character_combo.pack(side="left", padx=(0,20))
+
+
+
         content_frame = ctk.CTkFrame(self)
         content_frame.grid(
-            row=3,
+            row=4,
             column=0,
             padx=20,
             pady=10,
@@ -230,7 +272,7 @@ class App(ctk.CTk):
         )
 
         status_label.grid(
-            row=4,
+            row=5,
             column=0,
             pady=10
         )
@@ -263,11 +305,21 @@ class App(ctk.CTk):
         )
 
         self.run_metadata = parsed_metadata
+        self.refresh_run_table()
+
+    # Function to refresh run table when changing/updating filters
+    def refresh_run_table(self):
+
+        filtered_runs = apply_filters(
+            self.run_metadata,
+            self.current_filter
+        )
 
         for row in self.results.get_children():
             self.results.delete(row)
 
-        for run in parsed_metadata:
+        for run in filtered_runs:
+
             result = "Win" if run.victory else "Loss"
 
             self.results.insert(
@@ -281,8 +333,7 @@ class App(ctk.CTk):
                 )
             )
 
-
-        self.status.set(f"Found {len(parsed_metadata)} runs.")
+        self.status.set(f"Showing {len(filtered_runs)} runs.")
 
     def on_run_selected(self, _event):
 
@@ -310,3 +361,20 @@ class App(ctk.CTk):
         self.result_label.configure(
             text=f"Result: {'Victory' if selected_run.victory else 'Defeat'}"
         )
+
+    def on_character_filter_changed(self, value: str):
+
+        if value == "All":
+            self.current_filter.characters = None
+        else:
+            self.current_filter.characters = {value}
+
+        self.refresh_run_table()
+
+    def clear_filters(self):
+
+        self.character_filter.set("All")
+
+        self.current_filter = RunFilter()
+
+        self.refresh_run_table()

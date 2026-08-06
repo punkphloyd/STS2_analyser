@@ -3,16 +3,15 @@ from datetime import datetime
 from pathlib import Path
 
 
-@dataclass
+@dataclass(slots=True)
 class RunFilter:
-    run_directory: Path | None = None
 
     date_mode: str = "all"
 
     start_date: datetime | None = None
     end_date: datetime | None = None
 
-    characters: list[str] | None = None
+    characters: set[str] | None = None
 
     min_ascension: int = 0
     max_ascension: int = 10
