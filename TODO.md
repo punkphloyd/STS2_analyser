@@ -11,21 +11,27 @@
 ## Phase 2 - Run Browser
 - [x] Convert GUI to grid layout
 - [x] Add results frame
-- [ ] Add run table (Treeview)
-- [ ] Parse run metadata
-- [ ] Populate run table
-- [ ] Sort by date descending
+- [x] Add run table (Treeview)
+- [x] Parse run metadata
+- [x] Populate run table
+- [x] Sort by date descending
+- [x] Select run
+- [x] Run details panel
 
 ## Phase 3 - Filtering
 - [ ] Date filter
 - [ ] Character filter
 - [ ] Ascension filter
 - [ ] Win/Loss filter
+- [ ] Clear filters
 
 ## Phase 4 - Dashboard
 - [ ] Overall statistics
 - [ ] Character statistics
 - [ ] Ascension statistics
+- [ ] Recent performance
+- [ ] Longest streak
+- [ ] Fastest victory
 
 ## Phase 5 - Analysis
 - [ ] Deck analysis
@@ -35,3 +41,22 @@
 - [ ] Path analysis
 - [ ] Event analysis
 - [ ] Combat analysis
+
+## Phase 6 - Visualisation
+- [ ] Win rate over time
+- [ ] Win rate by Ascension
+- [ ] Character usage
+- [ ] Average floor reached
+- [ ] Deck size distribution
+- [ ] Card pick frequency
+- [ ] Relic pick frequency
+- [ ] Boss relic choices
+- [ ] Event outcomes
+
+## Phase 7 - Polish
+- [ ] Remember last run directory
+- [ ] Export filtered runs to CSV
+- [ ] Export statistics
+- [ ] Dark/light themes
+- [ ] Settings
+- [ ] Performance improvements

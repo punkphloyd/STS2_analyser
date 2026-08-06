@@ -1,7 +1,9 @@
 import customtkinter as ctk
-from tkinter import filedialog
+from tkinter import filedialog, ttk
 from discovery.run_discovery import discover_runs
 from parsers.metadata_parser import parse_metadata
+from data_models.run_metadata import RunMetadata
+from typing import cast
 
 
 class App(ctk.CTk):
@@ -21,6 +23,14 @@ class App(ctk.CTk):
         self.status = ctk.StringVar(value="Ready")
 
         self.results = None
+        self.run_metadata: list[RunMetadata] = []
+
+        self.details_frame = None
+
+        self.date_label = None
+        self.character_label = None
+        self.ascension_label = None
+        self.result_label = None
 
         self.build_ui()
 
@@ -96,14 +106,74 @@ class App(ctk.CTk):
             sticky="se"
         )
 
-        results_frame = ctk.CTkFrame(self)
-        results_frame.grid(
+        content_frame = ctk.CTkFrame(self)
+        content_frame.grid(
             row=3,
             column=0,
             padx=20,
             pady=10,
             sticky="nsew"
         )
+
+        content_frame.grid_columnconfigure(0, weight=2)
+        content_frame.grid_columnconfigure(1, weight=3)
+
+        results_frame = ctk.CTkFrame(content_frame)
+        results_frame.grid(
+            row=0,
+            column=0,
+            padx=(0,10),
+            sticky="nsew"
+        )
+
+        self.details_frame = ctk.CTkFrame(content_frame)
+        self.details_frame.grid(
+            row=0,
+            column=1,
+            sticky="nsew"
+        )
+
+        details_label = ctk.CTkLabel(
+        self.details_frame,
+        text="Run Details",
+        font=("Segoe UI", 16, "bold")
+        )
+
+        results_frame.grid_rowconfigure(1, weight=1)
+        results_frame.grid_columnconfigure(0, weight=1)
+
+        self.details_frame.grid_rowconfigure(1, weight=1)
+        self.details_frame.grid_columnconfigure(0, weight=1)
+
+        details_label.pack(
+            anchor="w",
+            padx=10,
+            pady=(10, 0)
+        )
+
+        self.date_label = ctk.CTkLabel(
+            self.details_frame,
+            text="Date: -"
+        )
+        self.date_label.pack(anchor="w", padx=10)
+
+        self.character_label = ctk.CTkLabel(
+            self.details_frame,
+            text="Character: -"
+        )
+        self.character_label.pack(anchor="w", padx=10)
+
+        self.ascension_label = ctk.CTkLabel(
+            self.details_frame,
+            text="Ascension: -"
+        )
+        self.ascension_label.pack(anchor="w", padx=10)
+
+        self.result_label = ctk.CTkLabel(
+            self.details_frame,
+            text="Result: -"
+        )
+        self.result_label.pack(anchor="w", padx=10)
 
         results_label = ctk.CTkLabel(
             results_frame,
@@ -112,9 +182,47 @@ class App(ctk.CTk):
         )
         results_label.pack(anchor="w", padx=10, pady=(10, 0))
 
-        self.results = ctk.CTkTextbox(results_frame, wrap="none")
-        self.results.pack(fill="both", expand=True, padx=10, pady=10)
-        self.results.configure(state="disabled")
+        table_frame = ctk.CTkFrame(results_frame)
+        table_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.results = ttk.Treeview(
+            table_frame,
+            columns=("date", "character", "ascension", "result"),
+            show="headings"
+        )
+
+        self.results.bind(
+            "<<TreeviewSelect>>",
+            self.on_run_selected
+        )
+
+        self.results.heading("date", text="Date")
+        self.results.heading("character", text="Character")
+        self.results.heading("ascension", text="Ascension")
+        self.results.heading("result", text="Result")
+
+        self.results.column("date", width=150)
+        self.results.column("character", width=150)
+        self.results.column("ascension", width=100, anchor="center")
+        self.results.column("result", width=100, anchor="center")
+
+
+        # Add scroll bar to results table section
+        scrollbar = ttk.Scrollbar(
+            table_frame,
+            orient="vertical",
+            command=self.results.yview
+        )
+
+        self.results.configure(yscrollcommand=scrollbar.set)
+
+        scrollbar.pack(side="right", fill="y")
+
+        self.results.pack(
+            side="left",
+            fill="both",
+            expand=True
+        )
 
         status_label = ctk.CTkLabel(
             self,
@@ -138,37 +246,67 @@ class App(ctk.CTk):
     def load_runs(self):
 
         if not self.directory.get():
-            self.results.configure(state="normal")
-            self.results.delete("1.0", "end")
-            self.results.configure(state="disabled")
+            for row in self.results.get_children():
+                self.results.delete(row)
 
             self.status.set("Please select a run directory first.")
             return
 
         run_files = discover_runs(self.directory.get())
-        metadata = [
+        parsed_metadata: list[RunMetadata] = [
             parse_metadata(run)
             for run in run_files
         ]
-        metadata.sort(
+        parsed_metadata.sort(
             key=lambda m: m.start_time,
             reverse=True
         )
-        self.results.configure(state="normal")
 
-        self.results.delete("1.0", "end")
+        self.run_metadata = parsed_metadata
 
-        for run_metadata in metadata:
-            result = "Win" if run_metadata.victory else "Loss"
+        for row in self.results.get_children():
+            self.results.delete(row)
+
+        for run in parsed_metadata:
+            result = "Win" if run.victory else "Loss"
 
             self.results.insert(
+                "",
                 "end",
-                f"{run_metadata.start_time:%Y-%m-%d} | "
-                f"{run_metadata.character:<12} | "
-                f"A{run_metadata.ascension} | "
-                f"{result}\n"
+                values=(
+                    run.start_time.strftime("%Y-%m-%d"),
+                    run.character,
+                    run.ascension,
+                    result
+                )
             )
 
-        self.results.configure(state="disabled")
 
-        self.status.set(f"Found {len(metadata)} runs.")
+        self.status.set(f"Found {len(parsed_metadata)} runs.")
+
+    def on_run_selected(self, _event):
+
+        selected = self.results.selection()
+
+        if not selected:
+            return
+
+        index = cast(int, self.results.index(selected[0]))
+
+        selected_run = self.run_metadata[index]
+
+        self.date_label.configure(
+            text=f"Date: {selected_run.start_time:%Y-%m-%d}"
+        )
+
+        self.character_label.configure(
+            text=f"Character: {selected_run.character}"
+        )
+
+        self.ascension_label.configure(
+            text=f"Ascension: {selected_run.ascension}"
+        )
+
+        self.result_label.configure(
+            text=f"Result: {'Victory' if selected_run.victory else 'Defeat'}"
+        )
