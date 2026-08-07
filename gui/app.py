@@ -7,6 +7,8 @@ from data_models.run_metadata import RunMetadata
 from typing import cast
 from filters.filters import RunFilter
 from filters.run_filters import apply_filters
+from datetime import datetime, timedelta
+
 
 class App(ctk.CTk):
     def __init__(self):
@@ -145,6 +147,94 @@ class App(ctk.CTk):
         )
 
         character_combo.pack(side="left", padx=(0,20))
+
+        result_label = ctk.CTkLabel(
+            filter_frame,
+            text="Result: -",
+            font=("Segoe UI", 16, "bold")
+        )
+        result_label.pack(side="left", padx=(0, 5))
+        self.result_filter = ctk.StringVar(value="All")
+
+        result_combo = ctk.CTkComboBox(
+            filter_frame,
+            values=["All", "Wins", "Losses"],
+            variable=self.result_filter,
+            command=self.on_result_filter_changed,
+            width=120
+        )
+
+        result_combo.pack(side="left", padx=(0, 20))
+
+        # Ascension labels and comboboxes
+        ascension_label = ctk.CTkLabel(
+            filter_frame,
+            text="Ascension"
+        )
+        ascension_label.pack(side="left", padx=(0, 5))
+
+        self.min_ascension_filter = ctk.StringVar(value="0")
+
+        min_ascension_combo = ctk.CTkComboBox(
+            filter_frame,
+            values=[str(i) for i in range(11)],
+            variable=self.min_ascension_filter,
+            command=self.on_min_ascension_changed,
+            width=70
+        )
+
+        min_ascension_combo.pack(side="left", padx=(0, 5))
+
+        to_label = ctk.CTkLabel(
+            filter_frame,
+            text="to"
+        )
+        to_label.pack(side="left", padx=(0, 5))
+
+        self.max_ascension_filter = ctk.StringVar(value="10")
+
+        max_ascension_combo = ctk.CTkComboBox(
+            filter_frame,
+            values=[str(i) for i in range(11)],
+            variable=self.max_ascension_filter,
+            command=self.on_max_ascension_changed,
+            width=70
+        )
+
+        max_ascension_combo.pack(side="left", padx=(0, 20))
+
+        date_label = ctk.CTkLabel(
+            filter_frame,
+            text="Date"
+        )
+
+        date_label.pack(
+            side="left",
+            padx=(0, 5)
+        )
+
+        self.date_filter = ctk.StringVar(value="All")
+
+        date_combo = ctk.CTkComboBox(
+            filter_frame,
+            values=[
+                "All",
+                "Last 7 days",
+                "Last 30 days",
+                "Last 90 days",
+                "Last 365 days",
+                "Custom..."
+            ],
+            variable=self.date_filter,
+            command=self.on_date_filter_changed,
+            width=150
+        )
+
+        date_combo.pack(
+            side="left",
+            padx=(0, 20)
+        )
+
 
 
 
@@ -368,6 +458,58 @@ class App(ctk.CTk):
             self.current_filter.characters = None
         else:
             self.current_filter.characters = {value}
+
+        self.refresh_run_table()
+
+
+    def on_result_filter_changed(self, value: str):
+
+        if value == "All":
+            self.current_filter.victory = None
+
+        elif value == "Wins":
+            self.current_filter.victory = True
+
+        elif value == "Losses":
+            self.current_filter.victory = False
+
+        self.refresh_run_table()
+
+    def on_min_ascension_changed(self, value: str):
+
+        self.current_filter.min_ascension = int(value)
+
+        self.refresh_run_table()
+
+
+    def on_max_ascension_changed(self, value: str):
+
+        self.current_filter.max_ascension = int(value)
+
+        self.refresh_run_table()
+
+    def on_date_filter_changed(self, value: str):
+
+        now = datetime.now()
+
+        self.current_filter.start_date = None
+        self.current_filter.end_date = None
+
+        if value == "Last 7 days":
+            self.current_filter.start_date = now - timedelta(days=7)
+
+        elif value == "Last 30 days":
+            self.current_filter.start_date = now - timedelta(days=30)
+
+        elif value == "Last 90 days":
+            self.current_filter.start_date = now - timedelta(days=90)
+
+        elif value == "Last 365 days":
+            self.current_filter.start_date = now - timedelta(days=365)
+
+        elif value == "Custom...":
+            # We'll implement this later
+            pass
 
         self.refresh_run_table()
 
