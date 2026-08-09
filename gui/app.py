@@ -4,7 +4,6 @@ from discovery.run_discovery import discover_runs
 from gui import filter_frame
 from parsers.metadata_parser import parse_metadata
 from data_models.run_metadata import RunMetadata
-from typing import cast
 from filters.filters import RunFilter
 from filters.run_filters import apply_filters
 from datetime import datetime, timedelta
@@ -28,6 +27,7 @@ class App(ctk.CTk):
 
         self.results = None
         self.run_metadata: list[RunMetadata] = []
+        self.run_lookup: dict[str, RunMetadata] = {}
 
         self.details_frame = None
 
@@ -405,14 +405,17 @@ class App(ctk.CTk):
             self.current_filter
         )
 
+        # Clear lookup before rebuilding table
         for row in self.results.get_children():
             self.results.delete(row)
+
+        self.run_lookup.clear()
 
         for run in filtered_runs:
 
             result = "Win" if run.victory else "Loss"
 
-            self.results.insert(
+            item_id = self.results.insert(
                 "",
                 "end",
                 values=(
@@ -423,6 +426,8 @@ class App(ctk.CTk):
                 )
             )
 
+            self.run_lookup[item_id] = run
+
         self.status.set(f"Showing {len(filtered_runs)} runs.")
 
     def on_run_selected(self, _event):
@@ -432,9 +437,7 @@ class App(ctk.CTk):
         if not selected:
             return
 
-        index = cast(int, self.results.index(selected[0]))
-
-        selected_run = self.run_metadata[index]
+        selected_run = self.run_lookup[selected[0]]
 
         self.date_label.configure(
             text=f"Date: {selected_run.start_time:%Y-%m-%d}"
