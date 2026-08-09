@@ -20,7 +20,7 @@ class App(ctk.CTk):
         ctk.set_default_color_theme("blue")
 
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(4, weight=1)
+        self.grid_rowconfigure(5, weight=1)
 
         self.directory = ctk.StringVar()
         self.status = ctk.StringVar(value="Ready")
@@ -38,7 +38,7 @@ class App(ctk.CTk):
 
         # Current filter storage
         self.current_filter = RunFilter()
-
+        self.custom_date_frame = None
         self.build_ui()
 
     def build_ui(self):
@@ -240,7 +240,7 @@ class App(ctk.CTk):
 
         content_frame = ctk.CTkFrame(self)
         content_frame.grid(
-            row=4,
+            row=5,
             column=0,
             padx=20,
             pady=10,
@@ -317,6 +317,55 @@ class App(ctk.CTk):
         table_frame = ctk.CTkFrame(results_frame)
         table_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
+        self.custom_date_frame = ctk.CTkFrame(self)
+        from_label = ctk.CTkLabel(
+            self.custom_date_frame,
+            text="From"
+        )
+        from_label.pack(
+            side="left",
+            padx=(10, 5)
+        )
+
+        self.from_date_entry = ctk.CTkEntry(
+            self.custom_date_frame,
+            width=120,
+            placeholder_text="DD/MM/YYYY"
+        )
+        self.from_date_entry.pack(
+            side="left",
+            padx=(0, 20)
+        )
+
+        to_label = ctk.CTkLabel(
+            self.custom_date_frame,
+            text="To"
+        )
+        to_label.pack(
+            side="left",
+            padx=(0, 5)
+        )
+
+        self.to_date_entry = ctk.CTkEntry(
+            self.custom_date_frame,
+            width=120,
+            placeholder_text="DD/MM/YYYY"
+        )
+        self.to_date_entry.pack(
+            side="left",
+            padx=(0, 20)
+        )
+
+        apply_button = ctk.CTkButton(
+            self.custom_date_frame,
+            text="Apply",
+            #command=self.apply_custom_dates,
+            width=80
+        )
+        apply_button.pack(
+            side="left"
+        )
+
         self.results = ttk.Treeview(
             table_frame,
             columns=("date", "character", "ascension", "result"),
@@ -362,7 +411,7 @@ class App(ctk.CTk):
         )
 
         status_label.grid(
-            row=5,
+            row=6,
             column=0,
             pady=10
         )
@@ -495,6 +544,7 @@ class App(ctk.CTk):
 
         now = datetime.now()
 
+        self.current_filter.date_mode = value
         self.current_filter.start_date = None
         self.current_filter.end_date = None
 
@@ -511,8 +561,16 @@ class App(ctk.CTk):
             self.current_filter.start_date = now - timedelta(days=365)
 
         elif value == "Custom...":
-            # We'll implement this later
-            pass
+            self.custom_date_frame.grid(
+                row=4,
+                column=0,
+                padx=20,
+                pady=(0, 10),
+                sticky="ew"
+            )
+            return
+
+        self.custom_date_frame.grid_remove()
 
         self.refresh_run_table()
 
