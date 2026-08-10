@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from tkcalendar import DateEntry
 
 
 class FilterFrame(ctk.CTkFrame):
@@ -32,9 +33,21 @@ class FilterFrame(ctk.CTkFrame):
         self.build_ui()
 
     def build_ui(self):
+        self.grid_columnconfigure(0, weight=1)
+
+        # ============================================================
+        # Main filter controls
+        # ============================================================
+
+        controls_frame = ctk.CTkFrame(self)
+        controls_frame.grid(
+            row=0,
+            column=0,
+            sticky="ew"
+        )
 
         filter_label = ctk.CTkLabel(
-            self,
+            controls_frame,
             text="Filters",
             font=("Segoe UI", 16, "bold")
         )
@@ -44,7 +57,7 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         character_label = ctk.CTkLabel(
-            self,
+            controls_frame,
             text="Character"
         )
         character_label.pack(
@@ -53,7 +66,7 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         self.character_combo = ctk.CTkComboBox(
-            self,
+            controls_frame,
             values=[
                 "All",
                 "Ironclad",
@@ -72,7 +85,7 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         result_label = ctk.CTkLabel(
-            self,
+            controls_frame,
             text="Result"
         )
         result_label.pack(
@@ -81,7 +94,7 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         self.result_combo = ctk.CTkComboBox(
-            self,
+            controls_frame,
             values=[
                 "All",
                 "Wins",
@@ -97,7 +110,7 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         ascension_label = ctk.CTkLabel(
-            self,
+            controls_frame,
             text="Ascension"
         )
         ascension_label.pack(
@@ -106,7 +119,7 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         self.min_ascension_combo = ctk.CTkComboBox(
-            self,
+            controls_frame,
             values=[str(i) for i in range(11)],
             width=60,
             command=self.on_min_ascension_changed
@@ -117,7 +130,7 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         to_label = ctk.CTkLabel(
-            self,
+            controls_frame,
             text="to"
         )
         to_label.pack(
@@ -126,7 +139,7 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         self.max_ascension_combo = ctk.CTkComboBox(
-            self,
+            controls_frame,
             values=[str(i) for i in range(11)],
             width=60,
             command=self.on_max_ascension_changed
@@ -138,7 +151,7 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         date_label = ctk.CTkLabel(
-            self,
+            controls_frame,
             text="Date"
         )
         date_label.pack(
@@ -147,7 +160,7 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         self.date_combo = ctk.CTkComboBox(
-            self,
+            controls_frame,
             values=[
                 "All",
                 "Last 7 days",
@@ -166,7 +179,7 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         clear_button = ctk.CTkButton(
-            self,
+            controls_frame,
             text="Clear Filters",
             command=self.on_clear_filters,
             width=110
@@ -176,7 +189,20 @@ class FilterFrame(ctk.CTkFrame):
             padx=(0, 10)
         )
 
+        # ============================================================
+        # Custom date controls
+        # ============================================================
+
         self.custom_date_frame = ctk.CTkFrame(self)
+
+        self.custom_date_frame.grid(
+            row=1,
+            column=0,
+            sticky="ew",
+            pady=(5, 0)
+        )
+
+        self.custom_date_frame.grid_remove()
 
         from_label = ctk.CTkLabel(
             self.custom_date_frame,
@@ -187,10 +213,10 @@ class FilterFrame(ctk.CTkFrame):
             padx=(10, 5)
         )
 
-        self.from_date_entry = ctk.CTkEntry(
+        self.from_date_entry = DateEntry(
             self.custom_date_frame,
-            width=120,
-            placeholder_text="DD/MM/YYYY"
+            width=12,
+            date_pattern="dd/mm/yyyy"
         )
         self.from_date_entry.pack(
             side="left",
@@ -206,10 +232,10 @@ class FilterFrame(ctk.CTkFrame):
             padx=(0, 5)
         )
 
-        self.to_date_entry = ctk.CTkEntry(
+        self.to_date_entry = DateEntry(
             self.custom_date_frame,
-            width=120,
-            placeholder_text="DD/MM/YYYY"
+            width=12,
+            date_pattern="dd/mm/yyyy"
         )
         self.to_date_entry.pack(
             side="left",
@@ -226,21 +252,15 @@ class FilterFrame(ctk.CTkFrame):
             side="left",
             padx=(0, 10)
         )
-
-
     # Functions to handle showing/hiding the custom date selection boxes
     def show_custom_dates(self):
-        self.custom_date_frame.pack(
-            side="left",
-            fill="x",
-            padx=(0, 10)
-        )
+        self.custom_date_frame.grid()
 
     def hide_custom_dates(self):
-        self.custom_date_frame.pack_forget()
+        self.custom_date_frame.grid_remove()
 
     def apply_custom_dates(self):
         self.on_custom_dates_applied(
-            self.from_date_entry.get().strip(),
-            self.to_date_entry.get().strip()
+            self.from_date_entry.get_date(),
+            self.to_date_entry.get_date()
         )

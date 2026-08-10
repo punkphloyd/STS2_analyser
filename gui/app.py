@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from gui.details_frame import DetailsFrame
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from tkinter import filedialog, ttk
 
 from data_models.run_metadata import RunMetadata
@@ -132,13 +132,13 @@ class App(ctk.CTk):
 
         self.filter_frame = FilterFrame(
             self,
-            on_character_changed=self.on_character_filter_changed,
-            on_result_changed=self.on_result_filter_changed,
-            on_min_ascension_changed=self.on_min_ascension_changed,
-            on_max_ascension_changed=self.on_max_ascension_changed,
-            on_date_changed=self.on_date_filter_changed,
-            on_clear_filters=self.clear_filters,
-            on_custom_dates_applied=self.on_custom_dates_applied
+                on_character_changed=self.on_character_filter_changed,
+                on_result_changed=self.on_result_filter_changed,
+                on_min_ascension_changed=self.on_min_ascension_changed,
+                on_max_ascension_changed=self.on_max_ascension_changed,
+                on_date_changed=self.on_date_filter_changed,
+                on_clear_filters=self.clear_filters,
+                on_custom_dates_applied=self.on_custom_dates_applied
         )
 
         self.filter_frame.grid(
@@ -237,6 +237,7 @@ class App(ctk.CTk):
 
     # Function to refresh run table when changing/updating filters
     def refresh_run_table(self):
+
         filtered_runs = apply_filters(
             self.run_metadata,
             self.current_filter
@@ -244,7 +245,9 @@ class App(ctk.CTk):
 
         self.results_frame.set_runs(filtered_runs)
 
-        return filtered_runs
+        self.status.set(
+            f"Found {len(filtered_runs)} runs."
+        )
 
     def on_run_selected(self, _event):
 
@@ -291,7 +294,7 @@ class App(ctk.CTk):
 
     def on_date_filter_changed(self, value: str):
 
-        now = datetime.now()
+        now = datetime.now().date()
 
         self.current_filter.date_mode = value
         self.current_filter.start_date = None
@@ -320,38 +323,11 @@ class App(ctk.CTk):
 
     def on_custom_dates_applied(
             self,
-            from_text: str,
-            to_text: str
+            start_date: date,
+            end_date: date
     ):
 
-        try:
-            start_date = (
-                datetime.strptime(from_text, "%d/%m/%Y")
-                if from_text
-                else None
-            )
-
-            end_date = (
-                datetime.strptime(to_text, "%d/%m/%Y")
-                if to_text
-                else None
-            )
-
-            if end_date is not None:
-                end_date = end_date.replace(
-                    hour=23,
-                    minute=59,
-                    second=59,
-                    microsecond=999999
-                )
-
-        except ValueError:
-            self.status.set(
-                "Invalid date format. Please use DD/MM/YYYY."
-            )
-            return
-
-        if start_date and end_date and start_date > end_date:
+        if start_date > end_date:
             self.status.set(
                 "Start date cannot be after end date"
             )
@@ -361,13 +337,7 @@ class App(ctk.CTk):
         self.current_filter.start_date = start_date
         self.current_filter.end_date = end_date
 
-        filtered_runs = self.refresh_run_table()
-
-        self.status.set(
-            f"Found {len(filtered_runs)} runs."
-        )
-
-
+        self.refresh_run_table()
 
     def clear_filters(self):
 

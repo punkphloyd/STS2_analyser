@@ -40,14 +40,14 @@ def apply_filters(
         filtered_runs = [
             run
             for run in filtered_runs
-            if run.start_time >= filters.start_date
+            if run.start_time.date() >= filters.start_date
         ]
 
     if filters.end_date is not None:
         filtered_runs = [
             run
             for run in filtered_runs
-            if run.start_time <= filters.end_date
+            if run.start_time.date() <= filters.end_date
         ]
 
     return filtered_runs

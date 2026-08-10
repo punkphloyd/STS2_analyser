@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
 
 
@@ -8,8 +8,8 @@ class RunFilter:
 
     date_mode: str = "all"
 
-    start_date: datetime | None = None
-    end_date: datetime | None = None
+    start_date: date | None = None
+    end_date: date | None = None
 
     characters: set[str] | None = None
 
