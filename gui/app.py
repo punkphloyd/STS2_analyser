@@ -9,7 +9,7 @@ from filters.run_filters import apply_filters
 from gui.filter_frame import FilterFrame
 from gui.results_frame import ResultsFrame
 from services.run_loader import load_run_metadata
-
+from gui.directory_frame import DirectoryFrame
 
 class App(ctk.CTk):
     def __init__(self):
@@ -61,52 +61,18 @@ class App(ctk.CTk):
         # 2. Directory selection
         # ============================================================
 
-        directory_frame = ctk.CTkFrame(self)
-        directory_frame.grid_columnconfigure(0, weight=1)
-        directory_frame.grid(
+        self.directory_frame = DirectoryFrame(
+            self,
+            directory=self.directory,
+            on_browse=self.browse_directory
+        )
+
+        self.directory_frame.grid(
             row=1,
             column=0,
             padx=20,
             pady=10,
             sticky="ew"
-        )
-
-        directory_label = ctk.CTkLabel(
-            directory_frame,
-            text="Run directory"
-        )
-        directory_label.grid(
-            row=0,
-            column=0,
-            columnspan=2,
-            sticky="w",
-            padx=15,
-            pady=(15, 5)
-        )
-
-        directory_entry = ctk.CTkEntry(
-            directory_frame,
-            textvariable=self.directory
-        )
-        directory_entry.grid(
-            row=1,
-            column=0,
-            sticky="ew",
-            padx=(15, 10),
-            pady=(0, 15)
-        )
-
-        browse_button = ctk.CTkButton(
-            directory_frame,
-            text="Browse...",
-            command=self.browse_directory,
-            width=120
-        )
-        browse_button.grid(
-            row=1,
-            column=1,
-            padx=(0, 15),
-            pady=(0, 15)
         )
 
         # ============================================================
