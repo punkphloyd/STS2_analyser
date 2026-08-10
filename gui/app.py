@@ -1,3 +1,5 @@
+from idlelib.query import CustomRun
+
 import customtkinter as ctk
 from tkinter import filedialog, ttk
 from discovery.run_discovery import discover_runs
@@ -6,7 +8,7 @@ from parsers.metadata_parser import parse_metadata
 from data_models.run_metadata import RunMetadata
 from filters.filters import RunFilter
 from filters.run_filters import apply_filters
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 
 class App(ctk.CTk):
@@ -359,11 +361,12 @@ class App(ctk.CTk):
         apply_button = ctk.CTkButton(
             self.custom_date_frame,
             text="Apply",
-            #command=self.apply_custom_dates,
+            command=self.apply_custom_dates,
             width=80
         )
         apply_button.pack(
-            side="left"
+            side="left",
+            padx=(0,10)
         )
 
         self.results = ttk.Treeview(
@@ -571,6 +574,46 @@ class App(ctk.CTk):
             return
 
         self.custom_date_frame.grid_remove()
+
+        self.refresh_run_table()
+
+    def apply_custom_dates(self):
+        from_text = self.from_date_entry.get().strip()
+        to_text = self.to_date_entry.get().strip()
+
+        try:
+            start_date = (
+                datetime.strptime(from_text, "%d/%m/%Y")
+                if from_text
+                else None
+            )
+
+            end_date = (
+                datetime.strptime(to_text, "%d/%m/%Y")
+                if to_text
+                else None
+            )
+
+            # Force end date recorded time to be 23:59:59
+            if end_date is not None:
+                end_date = end_date.replace(
+                    hour=23,
+                    minute=59,
+                    second=59,
+                    microsecond=999999
+                )
+
+        except ValueError:
+            self.status.set("Invalid date format. Please use DD/MM/YYYY.")
+            return
+
+        if start_date and end_date and start_date > end_date:
+            self.status.set("Start date cannot be after end date")
+            return
+
+        self.current_filter.date_mode = "Custom"
+        self.current_filter.start_date = start_date
+        self.current_filter.end_date = end_date
 
         self.refresh_run_table()
 
