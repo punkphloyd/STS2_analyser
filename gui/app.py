@@ -2,12 +2,11 @@ from idlelib.query import CustomRun
 
 import customtkinter as ctk
 from tkinter import filedialog, ttk
-from discovery.run_discovery import discover_runs
 from gui import filter_frame
-from parsers.metadata_parser import parse_metadata
 from data_models.run_metadata import RunMetadata
 from filters.filters import RunFilter
 from filters.run_filters import apply_filters
+from services.run_loader import load_run_metadata
 from datetime import datetime, timedelta, time
 
 
@@ -448,18 +447,16 @@ class App(ctk.CTk):
             self.status.set("Please select a run directory first.")
             return
 
-        run_files = discover_runs(self.directory.get())
-        parsed_metadata: list[RunMetadata] = [
-            parse_metadata(run)
-            for run in run_files
-        ]
-        parsed_metadata.sort(
-            key=lambda m: m.start_time,
-            reverse=True
+        self.run_metadata = load_run_metadata(
+            self.directory.get()
         )
 
-        self.run_metadata = parsed_metadata
         self.refresh_run_table()
+
+        self.status.set(
+            f"Found {len(self.run_metadata)} runs."
+        )
+
 
     # Function to refresh run table when changing/updating filters
     def refresh_run_table(self):
