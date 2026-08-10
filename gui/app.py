@@ -1,5 +1,5 @@
 from idlelib.query import CustomRun
-
+from gui.results_frame import ResultsFrame
 import customtkinter as ctk
 from tkinter import filedialog, ttk
 from gui import filter_frame
@@ -26,9 +26,8 @@ class App(ctk.CTk):
         self.directory = ctk.StringVar()
         self.status = ctk.StringVar(value="Ready")
 
-        self.results = None
+        self.results_frame = None
         self.run_metadata: list[RunMetadata] = []
-        self.run_lookup: dict[str, RunMetadata] = {}
 
         self.details_frame = None
 
@@ -44,6 +43,10 @@ class App(ctk.CTk):
 
     def build_ui(self):
 
+        # ============================================================
+        # 1. Title
+        # ============================================================
+
         title = ctk.CTkLabel(
             self,
             text="Slay the Spire 2 - Run Analyser",
@@ -56,6 +59,10 @@ class App(ctk.CTk):
             pady=(20, 15)
         )
 
+        # ============================================================
+        # 2. Directory selection
+        # ============================================================
+
         directory_frame = ctk.CTkFrame(self)
         directory_frame.grid_columnconfigure(0, weight=1)
         directory_frame.grid(
@@ -66,7 +73,10 @@ class App(ctk.CTk):
             sticky="ew"
         )
 
-        directory_label = ctk.CTkLabel(directory_frame, text="Run directory")
+        directory_label = ctk.CTkLabel(
+            directory_frame,
+            text="Run directory"
+        )
         directory_label.grid(
             row=0,
             column=0,
@@ -101,6 +111,10 @@ class App(ctk.CTk):
             pady=(0, 15)
         )
 
+        # ============================================================
+        # 3. Load button
+        # ============================================================
+
         load_button = ctk.CTkButton(
             self,
             text="Load Runs",
@@ -114,21 +128,30 @@ class App(ctk.CTk):
             sticky="se"
         )
 
+        # ============================================================
+        # 4. Filter frame
+        # ============================================================
+
         filter_frame = ctk.CTkFrame(self)
         filter_frame.grid(
             row=3,
             column=0,
             padx=20,
-            pady=(0,10),
+            pady=(0, 10),
             sticky="ew"
         )
+
+        # Character filter
 
         character_label = ctk.CTkLabel(
             filter_frame,
             text="Character: -",
             font=("Segoe UI", 16, "bold")
         )
-        character_label.pack(side="left", padx=(10,5))
+        character_label.pack(
+            side="left",
+            padx=(10, 5)
+        )
 
         self.character_filter = ctk.StringVar(value="All")
 
@@ -147,14 +170,23 @@ class App(ctk.CTk):
             width=160
         )
 
-        character_combo.pack(side="left", padx=(0,20))
+        character_combo.pack(
+            side="left",
+            padx=(0, 20)
+        )
+
+        # Result filter
 
         result_label = ctk.CTkLabel(
             filter_frame,
             text="Result: -",
             font=("Segoe UI", 16, "bold")
         )
-        result_label.pack(side="left", padx=(0, 5))
+        result_label.pack(
+            side="left",
+            padx=(0, 5)
+        )
+
         self.result_filter = ctk.StringVar(value="All")
 
         result_combo = ctk.CTkComboBox(
@@ -165,14 +197,21 @@ class App(ctk.CTk):
             width=120
         )
 
-        result_combo.pack(side="left", padx=(0, 20))
+        result_combo.pack(
+            side="left",
+            padx=(0, 20)
+        )
 
-        # Ascension labels and comboboxes
+        # Ascension filter
+
         ascension_label = ctk.CTkLabel(
             filter_frame,
             text="Ascension"
         )
-        ascension_label.pack(side="left", padx=(0, 5))
+        ascension_label.pack(
+            side="left",
+            padx=(0, 5)
+        )
 
         self.min_ascension_filter = ctk.StringVar(value="0")
 
@@ -184,13 +223,19 @@ class App(ctk.CTk):
             width=70
         )
 
-        min_ascension_combo.pack(side="left", padx=(0, 5))
+        min_ascension_combo.pack(
+            side="left",
+            padx=(0, 5)
+        )
 
         to_label = ctk.CTkLabel(
             filter_frame,
             text="to"
         )
-        to_label.pack(side="left", padx=(0, 5))
+        to_label.pack(
+            side="left",
+            padx=(0, 5)
+        )
 
         self.max_ascension_filter = ctk.StringVar(value="10")
 
@@ -202,7 +247,12 @@ class App(ctk.CTk):
             width=70
         )
 
-        max_ascension_combo.pack(side="left", padx=(0, 20))
+        max_ascension_combo.pack(
+            side="left",
+            padx=(0, 20)
+        )
+
+        # Date filter
 
         date_label = ctk.CTkLabel(
             filter_frame,
@@ -236,71 +286,7 @@ class App(ctk.CTk):
             padx=(0, 20)
         )
 
-
-
-
-        content_frame = ctk.CTkFrame(self)
-        content_frame.grid(
-            row=5,
-            column=0,
-            padx=20,
-            pady=10,
-            sticky="nsew"
-        )
-
-        content_frame.grid_columnconfigure(0, weight=2)
-        content_frame.grid_columnconfigure(1, weight=3)
-
-        results_frame = ctk.CTkFrame(content_frame)
-        results_frame.grid(
-            row=0,
-            column=0,
-            padx=(0,10),
-            sticky="nsew"
-        )
-
-        self.details_frame = ctk.CTkFrame(content_frame)
-        self.details_frame.grid(
-            row=0,
-            column=1,
-            sticky="nsew"
-        )
-
-        details_label = ctk.CTkLabel(
-        self.details_frame,
-        text="Run Details",
-        font=("Segoe UI", 16, "bold")
-        )
-
-        results_frame.grid_rowconfigure(1, weight=1)
-        results_frame.grid_columnconfigure(0, weight=1)
-
-        self.details_frame.grid_rowconfigure(1, weight=1)
-        self.details_frame.grid_columnconfigure(0, weight=1)
-
-        details_label.pack(
-            anchor="w",
-            padx=10,
-            pady=(10, 0)
-        )
-
-        self.date_label = ctk.CTkLabel(
-            self.details_frame,
-            text="Date: -"
-        )
-        self.date_label.pack(anchor="w", padx=10)
-
-        self.character_label = ctk.CTkLabel(
-            self.details_frame,
-            text="Character: -"
-        )
-        self.character_label.pack(anchor="w", padx=10)
-
-        self.ascension_label = ctk.CTkLabel(
-            self.details_frame,
-            text="Ascension: -"
-        )
-        self.ascension_label.pack(anchor="w", padx=10)
+        # Clear filters button
 
         clear_filters_button = ctk.CTkButton(
             filter_frame,
@@ -314,23 +300,12 @@ class App(ctk.CTk):
             padx=(10, 0)
         )
 
-        self.result_label = ctk.CTkLabel(
-            self.details_frame,
-            text="Result: -"
-        )
-        self.result_label.pack(anchor="w", padx=10)
-
-        results_label = ctk.CTkLabel(
-            results_frame,
-            text="Runs",
-            font=("Segoe UI", 16, "bold")
-        )
-        results_label.pack(anchor="w", padx=10, pady=(10, 0))
-
-        table_frame = ctk.CTkFrame(results_frame)
-        table_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        # ============================================================
+        # 5. Custom date frame
+        # ============================================================
 
         self.custom_date_frame = ctk.CTkFrame(self)
+
         from_label = ctk.CTkLabel(
             self.custom_date_frame,
             text="From"
@@ -377,47 +352,106 @@ class App(ctk.CTk):
         )
         apply_button.pack(
             side="left",
-            padx=(0,10)
+            padx=(0, 10)
         )
 
-        self.results = ttk.Treeview(
-            table_frame,
-            columns=("date", "character", "ascension", "result"),
-            show="headings"
+        # ============================================================
+        # 6. Main content
+        # ============================================================
+
+        content_frame = ctk.CTkFrame(self)
+        content_frame.grid(
+            row=5,
+            column=0,
+            padx=20,
+            pady=10,
+            sticky="nsew"
         )
 
-        self.results.bind(
-            "<<TreeviewSelect>>",
-            self.on_run_selected
+        content_frame.grid_columnconfigure(0, weight=2)
+        content_frame.grid_columnconfigure(1, weight=3)
+
+        # ------------------------------------------------------------
+        # 6a. Results frame
+        # ------------------------------------------------------------
+
+        self.results_frame = ResultsFrame(
+            content_frame,
+            on_run_selected=self.on_run_selected
         )
 
-        self.results.heading("date", text="Date")
-        self.results.heading("character", text="Character")
-        self.results.heading("ascension", text="Ascension")
-        self.results.heading("result", text="Result")
-
-        self.results.column("date", width=150)
-        self.results.column("character", width=150)
-        self.results.column("ascension", width=100, anchor="center")
-        self.results.column("result", width=100, anchor="center")
-
-
-        # Add scroll bar to results table section
-        scrollbar = ttk.Scrollbar(
-            table_frame,
-            orient="vertical",
-            command=self.results.yview
+        self.results_frame.grid(
+            row=0,
+            column=0,
+            padx=(0, 10),
+            sticky="nsew"
         )
 
-        self.results.configure(yscrollcommand=scrollbar.set)
+        # ------------------------------------------------------------
+        # 6b. Details frame
+        # ------------------------------------------------------------
 
-        scrollbar.pack(side="right", fill="y")
-
-        self.results.pack(
-            side="left",
-            fill="both",
-            expand=True
+        self.details_frame = ctk.CTkFrame(content_frame)
+        self.details_frame.grid(
+            row=0,
+            column=1,
+            sticky="nsew"
         )
+
+        self.details_frame.grid_rowconfigure(1, weight=1)
+        self.details_frame.grid_columnconfigure(0, weight=1)
+
+        details_label = ctk.CTkLabel(
+            self.details_frame,
+            text="Run Details",
+            font=("Segoe UI", 16, "bold")
+        )
+
+        details_label.pack(
+            anchor="w",
+            padx=10,
+            pady=(10, 0)
+        )
+
+        self.date_label = ctk.CTkLabel(
+            self.details_frame,
+            text="Date: -"
+        )
+        self.date_label.pack(
+            anchor="w",
+            padx=10
+        )
+
+        self.character_label = ctk.CTkLabel(
+            self.details_frame,
+            text="Character: -"
+        )
+        self.character_label.pack(
+            anchor="w",
+            padx=10
+        )
+
+        self.ascension_label = ctk.CTkLabel(
+            self.details_frame,
+            text="Ascension: -"
+        )
+        self.ascension_label.pack(
+            anchor="w",
+            padx=10
+        )
+
+        self.result_label = ctk.CTkLabel(
+            self.details_frame,
+            text="Result: -"
+        )
+        self.result_label.pack(
+            anchor="w",
+            padx=10
+        )
+
+        # ============================================================
+        # 7. Status
+        # ============================================================
 
         status_label = ctk.CTkLabel(
             self,
@@ -441,9 +475,6 @@ class App(ctk.CTk):
     def load_runs(self):
 
         if not self.directory.get():
-            for row in self.results.get_children():
-                self.results.delete(row)
-
             self.status.set("Please select a run directory first.")
             return
 
@@ -460,45 +491,19 @@ class App(ctk.CTk):
 
     # Function to refresh run table when changing/updating filters
     def refresh_run_table(self):
-
         filtered_runs = apply_filters(
             self.run_metadata,
             self.current_filter
         )
 
-        # Clear lookup before rebuilding table
-        for row in self.results.get_children():
-            self.results.delete(row)
-
-        self.run_lookup.clear()
-
-        for run in filtered_runs:
-
-            result = "Win" if run.victory else "Loss"
-
-            item_id = self.results.insert(
-                "",
-                "end",
-                values=(
-                    run.start_time.strftime("%Y-%m-%d"),
-                    run.character,
-                    run.ascension,
-                    result
-                )
-            )
-
-            self.run_lookup[item_id] = run
-
-        self.status.set(f"Showing {len(filtered_runs)} runs.")
+        self.results_frame.set_runs(filtered_runs)
 
     def on_run_selected(self, _event):
 
-        selected = self.results.selection()
+        selected_run = self.results_frame.get_selected_run()
 
-        if not selected:
+        if selected_run is None:
             return
-
-        selected_run = self.run_lookup[selected[0]]
 
         self.date_label.configure(
             text=f"Date: {selected_run.start_time:%Y-%m-%d}"
