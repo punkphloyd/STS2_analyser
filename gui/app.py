@@ -303,6 +303,18 @@ class App(ctk.CTk):
         )
         self.ascension_label.pack(anchor="w", padx=10)
 
+        clear_filters_button = ctk.CTkButton(
+            filter_frame,
+            text="Clear Filters",
+            command=self.clear_filters,
+            width=100
+        )
+
+        clear_filters_button.pack(
+            side="left",
+            padx=(10, 0)
+        )
+
         self.result_label = ctk.CTkLabel(
             self.details_frame,
             text="Result: -"
@@ -620,6 +632,15 @@ class App(ctk.CTk):
     def clear_filters(self):
 
         self.character_filter.set("All")
+        self.result_filter.set("All")
+        self.min_ascension_filter.set("0")
+        self.max_ascension_filter.set("10")
+        self.date_filter.set("All")
+
+        self.from_date_entry.delete(0, "end")
+        self.to_date_entry.delete(0, "end")
+
+        self.custom_date_frame.grid_remove()
 
         self.current_filter = RunFilter()
 

@@ -19,11 +19,11 @@
 - [x] Run details panel
 
 ## Phase 3 - Filtering
-- [ ] Date filter
-- [ ] Character filter
-- [ ] Ascension filter
-- [ ] Win/Loss filter
-- [ ] Clear filters
+- [x] Date filter
+- [x] Character filter
+- [x] Ascension filter
+- [x] Win/Loss filter
+- [x] Clear filters
 
 ## Phase 4 - Dashboard
 - [ ] Overall statistics
