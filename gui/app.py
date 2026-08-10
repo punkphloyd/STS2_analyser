@@ -1,13 +1,13 @@
-from idlelib.query import CustomRun
-from gui.results_frame import ResultsFrame
 import customtkinter as ctk
+from datetime import datetime, timedelta
 from tkinter import filedialog, ttk
-from gui import filter_frame
+
 from data_models.run_metadata import RunMetadata
 from filters.filters import RunFilter
 from filters.run_filters import apply_filters
+from gui.filter_frame import FilterFrame
+from gui.results_frame import ResultsFrame
 from services.run_loader import load_run_metadata
-from datetime import datetime, timedelta, time
 
 
 class App(ctk.CTk):
@@ -26,10 +26,15 @@ class App(ctk.CTk):
         self.directory = ctk.StringVar()
         self.status = ctk.StringVar(value="Ready")
 
-        self.results_frame = None
         self.run_metadata: list[RunMetadata] = []
 
+        # Frames definition
+
+        self.results_frame = None
         self.details_frame = None
+        self.filter_frame = None
+
+        # Labels
 
         self.date_label = None
         self.character_label = None
@@ -38,7 +43,6 @@ class App(ctk.CTk):
 
         # Current filter storage
         self.current_filter = RunFilter()
-        self.custom_date_frame = None
         self.build_ui()
 
     def build_ui(self):
@@ -132,227 +136,23 @@ class App(ctk.CTk):
         # 4. Filter frame
         # ============================================================
 
-        filter_frame = ctk.CTkFrame(self)
-        filter_frame.grid(
+        self.filter_frame = FilterFrame(
+            self,
+            on_character_changed=self.on_character_filter_changed,
+            on_result_changed=self.on_result_filter_changed,
+            on_min_ascension_changed=self.on_min_ascension_changed,
+            on_max_ascension_changed=self.on_max_ascension_changed,
+            on_date_changed=self.on_date_filter_changed,
+            on_clear_filters=self.clear_filters,
+            on_custom_dates_applied=self.on_custom_dates_applied
+        )
+
+        self.filter_frame.grid(
             row=3,
             column=0,
             padx=20,
-            pady=(0, 10),
+            pady=10,
             sticky="ew"
-        )
-
-        # Character filter
-
-        character_label = ctk.CTkLabel(
-            filter_frame,
-            text="Character: -",
-            font=("Segoe UI", 16, "bold")
-        )
-        character_label.pack(
-            side="left",
-            padx=(10, 5)
-        )
-
-        self.character_filter = ctk.StringVar(value="All")
-
-        character_combo = ctk.CTkComboBox(
-            filter_frame,
-            values=[
-                "All",
-                "Ironclad",
-                "Silent",
-                "Regent",
-                "Necrobinder",
-                "Defect"
-            ],
-            variable=self.character_filter,
-            command=self.on_character_filter_changed,
-            width=160
-        )
-
-        character_combo.pack(
-            side="left",
-            padx=(0, 20)
-        )
-
-        # Result filter
-
-        result_label = ctk.CTkLabel(
-            filter_frame,
-            text="Result: -",
-            font=("Segoe UI", 16, "bold")
-        )
-        result_label.pack(
-            side="left",
-            padx=(0, 5)
-        )
-
-        self.result_filter = ctk.StringVar(value="All")
-
-        result_combo = ctk.CTkComboBox(
-            filter_frame,
-            values=["All", "Wins", "Losses"],
-            variable=self.result_filter,
-            command=self.on_result_filter_changed,
-            width=120
-        )
-
-        result_combo.pack(
-            side="left",
-            padx=(0, 20)
-        )
-
-        # Ascension filter
-
-        ascension_label = ctk.CTkLabel(
-            filter_frame,
-            text="Ascension"
-        )
-        ascension_label.pack(
-            side="left",
-            padx=(0, 5)
-        )
-
-        self.min_ascension_filter = ctk.StringVar(value="0")
-
-        min_ascension_combo = ctk.CTkComboBox(
-            filter_frame,
-            values=[str(i) for i in range(11)],
-            variable=self.min_ascension_filter,
-            command=self.on_min_ascension_changed,
-            width=70
-        )
-
-        min_ascension_combo.pack(
-            side="left",
-            padx=(0, 5)
-        )
-
-        to_label = ctk.CTkLabel(
-            filter_frame,
-            text="to"
-        )
-        to_label.pack(
-            side="left",
-            padx=(0, 5)
-        )
-
-        self.max_ascension_filter = ctk.StringVar(value="10")
-
-        max_ascension_combo = ctk.CTkComboBox(
-            filter_frame,
-            values=[str(i) for i in range(11)],
-            variable=self.max_ascension_filter,
-            command=self.on_max_ascension_changed,
-            width=70
-        )
-
-        max_ascension_combo.pack(
-            side="left",
-            padx=(0, 20)
-        )
-
-        # Date filter
-
-        date_label = ctk.CTkLabel(
-            filter_frame,
-            text="Date"
-        )
-
-        date_label.pack(
-            side="left",
-            padx=(0, 5)
-        )
-
-        self.date_filter = ctk.StringVar(value="All")
-
-        date_combo = ctk.CTkComboBox(
-            filter_frame,
-            values=[
-                "All",
-                "Last 7 days",
-                "Last 30 days",
-                "Last 90 days",
-                "Last 365 days",
-                "Custom..."
-            ],
-            variable=self.date_filter,
-            command=self.on_date_filter_changed,
-            width=150
-        )
-
-        date_combo.pack(
-            side="left",
-            padx=(0, 20)
-        )
-
-        # Clear filters button
-
-        clear_filters_button = ctk.CTkButton(
-            filter_frame,
-            text="Clear Filters",
-            command=self.clear_filters,
-            width=100
-        )
-
-        clear_filters_button.pack(
-            side="left",
-            padx=(10, 0)
-        )
-
-        # ============================================================
-        # 5. Custom date frame
-        # ============================================================
-
-        self.custom_date_frame = ctk.CTkFrame(self)
-
-        from_label = ctk.CTkLabel(
-            self.custom_date_frame,
-            text="From"
-        )
-        from_label.pack(
-            side="left",
-            padx=(10, 5)
-        )
-
-        self.from_date_entry = ctk.CTkEntry(
-            self.custom_date_frame,
-            width=120,
-            placeholder_text="DD/MM/YYYY"
-        )
-        self.from_date_entry.pack(
-            side="left",
-            padx=(0, 20)
-        )
-
-        to_label = ctk.CTkLabel(
-            self.custom_date_frame,
-            text="To"
-        )
-        to_label.pack(
-            side="left",
-            padx=(0, 5)
-        )
-
-        self.to_date_entry = ctk.CTkEntry(
-            self.custom_date_frame,
-            width=120,
-            placeholder_text="DD/MM/YYYY"
-        )
-        self.to_date_entry.pack(
-            side="left",
-            padx=(0, 20)
-        )
-
-        apply_button = ctk.CTkButton(
-            self.custom_date_frame,
-            text="Apply",
-            command=self.apply_custom_dates,
-            width=80
-        )
-        apply_button.pack(
-            side="left",
-            padx=(0, 10)
         )
 
         # ============================================================
@@ -498,6 +298,8 @@ class App(ctk.CTk):
 
         self.results_frame.set_runs(filtered_runs)
 
+        return filtered_runs
+
     def on_run_selected(self, _event):
 
         selected_run = self.results_frame.get_selected_run()
@@ -577,23 +379,20 @@ class App(ctk.CTk):
         elif value == "Last 365 days":
             self.current_filter.start_date = now - timedelta(days=365)
 
+
         elif value == "Custom...":
-            self.custom_date_frame.grid(
-                row=4,
-                column=0,
-                padx=20,
-                pady=(0, 10),
-                sticky="ew"
-            )
+            self.filter_frame.show_custom_dates()
             return
 
-        self.custom_date_frame.grid_remove()
+        self.filter_frame.hide_custom_dates()
 
         self.refresh_run_table()
 
-    def apply_custom_dates(self):
-        from_text = self.from_date_entry.get().strip()
-        to_text = self.to_date_entry.get().strip()
+    def on_custom_dates_applied(
+            self,
+            from_text: str,
+            to_text: str
+    ):
 
         try:
             start_date = (
@@ -608,7 +407,6 @@ class App(ctk.CTk):
                 else None
             )
 
-            # Force end date recorded time to be 23:59:59
             if end_date is not None:
                 end_date = end_date.replace(
                     hour=23,
@@ -618,31 +416,41 @@ class App(ctk.CTk):
                 )
 
         except ValueError:
-            self.status.set("Invalid date format. Please use DD/MM/YYYY.")
+            self.status.set(
+                "Invalid date format. Please use DD/MM/YYYY."
+            )
             return
 
         if start_date and end_date and start_date > end_date:
-            self.status.set("Start date cannot be after end date")
+            self.status.set(
+                "Start date cannot be after end date"
+            )
             return
 
         self.current_filter.date_mode = "Custom"
         self.current_filter.start_date = start_date
         self.current_filter.end_date = end_date
 
-        self.refresh_run_table()
+        filtered_runs = self.refresh_run_table()
+
+        self.status.set(
+            f"Found {len(filtered_runs)} runs."
+        )
+
+
 
     def clear_filters(self):
 
-        self.character_filter.set("All")
-        self.result_filter.set("All")
-        self.min_ascension_filter.set("0")
-        self.max_ascension_filter.set("10")
-        self.date_filter.set("All")
+        self.filter_frame.character_combo.set("All")
+        self.filter_frame.result_combo.set("All")
+        self.filter_frame.min_ascension_combo.set("0")
+        self.filter_frame.max_ascension_combo.set("10")
+        self.filter_frame.date_combo.set("All")
 
-        self.from_date_entry.delete(0, "end")
-        self.to_date_entry.delete(0, "end")
+        self.filter_frame.from_date_entry.delete(0, "end")
+        self.filter_frame.to_date_entry.delete(0, "end")
 
-        self.custom_date_frame.grid_remove()
+        self.filter_frame.hide_custom_dates()
 
         self.current_filter = RunFilter()
 
