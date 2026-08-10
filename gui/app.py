@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from gui.details_frame import DetailsFrame
 from datetime import datetime, timedelta
 from tkinter import filedialog, ttk
 
@@ -33,13 +34,6 @@ class App(ctk.CTk):
         self.results_frame = None
         self.details_frame = None
         self.filter_frame = None
-
-        # Labels
-
-        self.date_label = None
-        self.character_label = None
-        self.ascension_label = None
-        self.result_label = None
 
         # Current filter storage
         self.current_filter = RunFilter()
@@ -191,62 +185,14 @@ class App(ctk.CTk):
         # 6b. Details frame
         # ------------------------------------------------------------
 
-        self.details_frame = ctk.CTkFrame(content_frame)
+        self.details_frame = DetailsFrame(
+            content_frame
+        )
+
         self.details_frame.grid(
             row=0,
             column=1,
             sticky="nsew"
-        )
-
-        self.details_frame.grid_rowconfigure(1, weight=1)
-        self.details_frame.grid_columnconfigure(0, weight=1)
-
-        details_label = ctk.CTkLabel(
-            self.details_frame,
-            text="Run Details",
-            font=("Segoe UI", 16, "bold")
-        )
-
-        details_label.pack(
-            anchor="w",
-            padx=10,
-            pady=(10, 0)
-        )
-
-        self.date_label = ctk.CTkLabel(
-            self.details_frame,
-            text="Date: -"
-        )
-        self.date_label.pack(
-            anchor="w",
-            padx=10
-        )
-
-        self.character_label = ctk.CTkLabel(
-            self.details_frame,
-            text="Character: -"
-        )
-        self.character_label.pack(
-            anchor="w",
-            padx=10
-        )
-
-        self.ascension_label = ctk.CTkLabel(
-            self.details_frame,
-            text="Ascension: -"
-        )
-        self.ascension_label.pack(
-            anchor="w",
-            padx=10
-        )
-
-        self.result_label = ctk.CTkLabel(
-            self.details_frame,
-            text="Result: -"
-        )
-        self.result_label.pack(
-            anchor="w",
-            padx=10
         )
 
         # ============================================================
@@ -307,21 +253,7 @@ class App(ctk.CTk):
         if selected_run is None:
             return
 
-        self.date_label.configure(
-            text=f"Date: {selected_run.start_time:%Y-%m-%d}"
-        )
-
-        self.character_label.configure(
-            text=f"Character: {selected_run.character}"
-        )
-
-        self.ascension_label.configure(
-            text=f"Ascension: {selected_run.ascension}"
-        )
-
-        self.result_label.configure(
-            text=f"Result: {'Victory' if selected_run.victory else 'Defeat'}"
-        )
+        self.details_frame.show_run(selected_run)
 
     def on_character_filter_changed(self, value: str):
 
@@ -331,7 +263,6 @@ class App(ctk.CTk):
             self.current_filter.characters = {value}
 
         self.refresh_run_table()
-
 
     def on_result_filter_changed(self, value: str):
 
@@ -351,7 +282,6 @@ class App(ctk.CTk):
         self.current_filter.min_ascension = int(value)
 
         self.refresh_run_table()
-
 
     def on_max_ascension_changed(self, value: str):
 
