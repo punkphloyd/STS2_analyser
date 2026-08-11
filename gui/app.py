@@ -10,6 +10,7 @@ from gui.filter_frame import FilterFrame
 from gui.results_frame import ResultsFrame
 from services.run_loader import load_run_metadata
 from gui.directory_frame import DirectoryFrame
+from gui.quick_plots_frame import QuickPlotsFrame
 
 class App(ctk.CTk):
     def __init__(self):
@@ -28,7 +29,7 @@ class App(ctk.CTk):
         self.status = ctk.StringVar(value="Ready")
 
         self.run_metadata: list[RunMetadata] = []
-
+        self.filtered_runs = []
         # Frames definition
 
         self.results_frame = None
@@ -161,8 +162,23 @@ class App(ctk.CTk):
             sticky="nsew"
         )
 
+        # ------------------------------------------------------------
+        # 7. Quick plots frame
+        # ------------------------------------------------------------
+        self.quick_plots_frame = QuickPlotsFrame(
+            self,
+            on_plot=self.on_quick_plot
+        )
+
+        self.quick_plots_frame.grid(
+            row=6,
+            column=0,
+            padx=20,
+            pady=(10, 5),
+            sticky="ew"
+        )
         # ============================================================
-        # 7. Status
+        # 8. Status
         # ============================================================
 
         status_label = ctk.CTkLabel(
@@ -171,7 +187,7 @@ class App(ctk.CTk):
         )
 
         status_label.grid(
-            row=6,
+            row=7,
             column=0,
             pady=10
         )
@@ -204,15 +220,15 @@ class App(ctk.CTk):
     # Function to refresh run table when changing/updating filters
     def refresh_run_table(self):
 
-        filtered_runs = apply_filters(
+        self.filtered_runs = apply_filters(
             self.run_metadata,
             self.current_filter
         )
 
-        self.results_frame.set_runs(filtered_runs)
+        self.results_frame.set_runs(self.filtered_runs)
 
         self.status.set(
-            f"Found {len(filtered_runs)} runs."
+            f"Found {len(self.filtered_runs)} runs."
         )
 
     def on_run_selected(self, _event):
@@ -321,3 +337,10 @@ class App(ctk.CTk):
         self.current_filter = RunFilter()
 
         self.refresh_run_table()
+
+    def on_quick_plot(self):
+
+        selected_plot = self.quick_plots_frame.plot_combo.get()
+
+        print(f"Quick plot selected: {selected_plot}")
+        print(f"Runs available for plot: {len(self.filtered_runs)}")
