@@ -10,3 +10,5 @@ class RunMetadata:
     character: str
     ascension: int
     victory: bool
+    game_version: str
+    game_mode: str

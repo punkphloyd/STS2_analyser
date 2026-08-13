@@ -17,3 +17,7 @@ class RunFilter:
     max_ascension: int = 10
 
     victory: bool | None = None
+
+    exclude_daily: bool = False
+    exclude_custom: bool = False
+    game_version: str | None = None

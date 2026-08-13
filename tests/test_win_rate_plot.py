@@ -2,7 +2,10 @@ from datetime import datetime
 from pathlib import Path
 
 from data_models.run_metadata import RunMetadata
-from plots.win_rate import plot_overall_win_rate
+from plots.win_rate import (
+    plot_overall_win_rate,
+    plot_win_rate_by_character_and_ascension,
+)
 
 
 def make_run(victory: bool) -> RunMetadata:
@@ -31,3 +34,15 @@ def test_plot_overall_win_rate():
     axis = figure.axes[0]
 
     assert axis.patches[0].get_height() == 50
+
+def test_plot_win_rate_by_character_and_ascension():
+
+    runs = [
+        make_run(True),
+        make_run(False),
+    ]
+
+    figure = plot_win_rate_by_character_and_ascension(runs)
+
+    assert figure is not None
+    assert len(figure.axes) == 2

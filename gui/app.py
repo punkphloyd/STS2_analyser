@@ -12,7 +12,7 @@ from services.run_loader import load_run_metadata
 from gui.directory_frame import DirectoryFrame
 from gui.quick_plots_frame import QuickPlotsFrame
 from gui.plot_window import PlotWindow
-from plots.win_rate import plot_overall_win_rate
+
 
 class App(ctk.CTk):
     def __init__(self):
@@ -346,11 +346,7 @@ class App(ctk.CTk):
 
         if selected_plot == "Win Rate":
 
-            figure = plot_overall_win_rate(
-                self.filtered_runs
-            )
-
-            if figure is None:
+            if not self.filtered_runs:
                 self.status.set(
                     "No runs available for plotting."
                 )
@@ -358,6 +354,6 @@ class App(ctk.CTk):
 
             PlotWindow(
                 self,
-                figure,
+                self.filtered_runs,
                 title="Win Rate"
             )

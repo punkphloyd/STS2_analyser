@@ -2,13 +2,20 @@ import customtkinter as ctk
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from plots.win_rate import (
+    plot_overall_win_rate,
+    plot_win_rate_by_character,
+    plot_win_rate_by_ascension,
+    plot_win_rate_by_character_and_ascension,
+)
+
 
 class PlotWindow(ctk.CTkToplevel):
 
     def __init__(
         self,
         master,
-        figure,
+        runs,
         title="Quick Plot"
     ):
         super().__init__(master)
@@ -16,7 +23,9 @@ class PlotWindow(ctk.CTkToplevel):
         self.title(title)
         self.geometry("800x600")
 
-        self.figure = figure
+        self.runs = runs
+        self.figure = None
+        self.canvas = None
 
         self.build_ui()
 
@@ -27,19 +36,95 @@ class PlotWindow(ctk.CTkToplevel):
 
     def build_ui(self):
 
-        self.canvas = FigureCanvasTkAgg(
-            self.figure,
-            master=self
+        controls_frame = ctk.CTkFrame(self)
+        controls_frame.pack(
+            fill="x",
+            padx=10,
+            pady=(10, 0)
         )
 
-        self.canvas.draw()
+        view_label = ctk.CTkLabel(
+            controls_frame,
+            text="View:"
+        )
+        view_label.pack(
+            side="left",
+            padx=(10, 5)
+        )
 
-        self.canvas.get_tk_widget().pack(
+        self.view_combo = ctk.CTkComboBox(
+            controls_frame,
+            values=[
+                "Overall",
+                "By Character",
+                "By Ascension",
+                "By Character & Ascension",
+            ],
+            command=self.on_view_changed,
+            width=200
+        )
+        self.view_combo.set("Overall")
+        self.view_combo.pack(
+            side="left",
+            padx=(0, 10)
+        )
+
+        self.plot_frame = ctk.CTkFrame(self)
+        self.plot_frame.pack(
             fill="both",
             expand=True,
             padx=10,
             pady=10
         )
 
+        self.update_plot("Overall")
+
+    def on_view_changed(self, value):
+
+        self.update_plot(value)
+
+    def update_plot(self, view):
+
+        if view == "Overall":
+            figure = plot_overall_win_rate(self.runs)
+
+        elif view == "By Character":
+            figure = plot_win_rate_by_character(self.runs)
+
+        elif view == "By Ascension":
+            figure = plot_win_rate_by_ascension(self.runs)
+
+        elif view == "By Character & Ascension":
+            figure = plot_win_rate_by_character_and_ascension(
+                self.runs
+            )
+
+        else:
+            return
+
+        if figure is None:
+            return
+
+        if self.canvas is not None:
+            self.canvas.get_tk_widget().destroy()
+
+        if self.figure is not None:
+            self.figure.clear()
+
+        self.figure = figure
+
+        self.canvas = FigureCanvasTkAgg(
+            self.figure,
+            master=self.plot_frame
+        )
+
+        self.canvas.draw()
+
+        self.canvas.get_tk_widget().pack(
+            fill="both",
+            expand=True
+        )
+
     def close(self):
+
         self.destroy()
