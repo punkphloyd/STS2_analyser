@@ -13,7 +13,10 @@ class FilterFrame(ctk.CTkFrame):
         on_max_ascension_changed,
         on_date_changed,
         on_clear_filters,
-        on_custom_dates_applied
+        on_custom_dates_applied,
+        on_exclude_daily_changed,
+        on_exclude_custom_changed,
+        on_game_version_changed
     ):
         super().__init__(master)
 
@@ -24,6 +27,9 @@ class FilterFrame(ctk.CTkFrame):
         self.on_date_changed = on_date_changed
         self.on_clear_filters = on_clear_filters
         self.on_custom_dates_applied = on_custom_dates_applied
+        self.on_exclude_daily_changed = on_exclude_daily_changed
+        self.on_exclude_custom_changed = on_exclude_custom_changed
+        self.on_game_version_changed = on_game_version_changed
 
         # Custom date filter variables
         self.custom_date_frame = None
@@ -190,13 +196,72 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         # ============================================================
+        # Run type (daily/standard etc) filter controls
+        # ============================================================
+
+        self.exclude_daily_checkbox = ctk.CTkCheckBox(
+            controls_frame,
+            text="Exclude Daily",
+            command=self.on_exclude_daily_changed
+        )
+        self.exclude_daily_checkbox.pack(
+            side="left",
+            padx=(10, 10)
+        )
+
+        self.exclude_custom_checkbox = ctk.CTkCheckBox(
+            controls_frame,
+            text="Exclude Custom",
+            command=self.on_exclude_custom_changed
+        )
+        self.exclude_custom_checkbox.pack(
+            side="left",
+            padx=(0, 10)
+        )
+
+        # ============================================================
+        # Secondary frame for version filtering
+        # ============================================================
+
+        secondary_frame = ctk.CTkFrame(self)
+
+        secondary_frame.grid(
+            row=1,
+            column=0,
+            sticky="ew",
+            pady=(5,0)
+        )
+
+        game_version_label = ctk.CTkLabel(
+            secondary_frame,
+            text="Game Version"
+        )
+        game_version_label.pack(
+            side="left",
+            padx=(10, 5)
+        )
+
+        self.game_version_combo = ctk.CTkComboBox(
+            secondary_frame,
+            values=["All"],
+            width=130,
+            command=self.on_game_version_changed
+        )
+        self.game_version_combo.set("All")
+        self.game_version_combo.pack(
+            side="left",
+            padx=(0, 10)
+        )
+
+
+        # ============================================================
         # Custom date controls
         # ============================================================
 
         self.custom_date_frame = ctk.CTkFrame(self)
 
         self.custom_date_frame.grid(
-            row=1,
+            row=2,
             column=0,
             sticky="ew",
             pady=(5, 0)
@@ -264,3 +329,13 @@ class FilterFrame(ctk.CTkFrame):
             self.from_date_entry.get_date(),
             self.to_date_entry.get_date()
         )
+
+    def set_game_versions(self, versions):
+
+        values = ["All"] + versions
+
+        self.game_version_combo.configure(
+            values=values
+        )
+
+        self.game_version_combo.set("All")

@@ -107,7 +107,10 @@ class App(ctk.CTk):
                 on_max_ascension_changed=self.on_max_ascension_changed,
                 on_date_changed=self.on_date_filter_changed,
                 on_clear_filters=self.clear_filters,
-                on_custom_dates_applied=self.on_custom_dates_applied
+                on_custom_dates_applied=self.on_custom_dates_applied,
+                on_exclude_daily_changed=self.on_exclude_daily_changed,
+                on_exclude_custom_changed=self.on_exclude_custom_changed,
+                on_game_version_changed=self.on_game_version_changed,
         )
 
         self.filter_frame.grid(
@@ -211,6 +214,13 @@ class App(ctk.CTk):
         self.run_metadata = load_run_metadata(
             self.directory.get()
         )
+
+        versions = self.sort_game_versions({
+            run.game_version
+            for run in self.run_metadata
+        })
+
+        self.filter_frame.set_game_versions(versions)
 
         self.refresh_run_table()
 
@@ -323,23 +333,6 @@ class App(ctk.CTk):
 
         self.refresh_run_table()
 
-    def clear_filters(self):
-
-        self.filter_frame.character_combo.set("All")
-        self.filter_frame.result_combo.set("All")
-        self.filter_frame.min_ascension_combo.set("0")
-        self.filter_frame.max_ascension_combo.set("10")
-        self.filter_frame.date_combo.set("All")
-
-        self.filter_frame.from_date_entry.delete(0, "end")
-        self.filter_frame.to_date_entry.delete(0, "end")
-
-        self.filter_frame.hide_custom_dates()
-
-        self.current_filter = RunFilter()
-
-        self.refresh_run_table()
-
     def on_quick_plot(self):
 
         selected_plot = self.quick_plots_frame.plot_combo.get()
@@ -357,3 +350,59 @@ class App(ctk.CTk):
                 self.filtered_runs,
                 title="Win Rate"
             )
+
+    def on_exclude_daily_changed(self):
+
+        self.current_filter.exclude_daily = (
+            self.filter_frame.exclude_daily_checkbox.get()
+        )
+
+        self.refresh_run_table()
+
+    def on_exclude_custom_changed(self):
+
+        self.current_filter.exclude_custom = (
+            self.filter_frame.exclude_custom_checkbox.get()
+        )
+
+        self.refresh_run_table()
+
+    def on_game_version_changed(self, value: str):
+
+        if value == "All":
+            self.current_filter.game_version = None
+        else:
+            self.current_filter.game_version = value
+
+        self.refresh_run_table()
+
+    def sort_game_versions(self, versions):
+        return sorted(
+            versions,
+            key=lambda version: [
+                int(part)
+                for part in version.lstrip("v").split(".")
+            ],
+            reverse=True
+        )
+
+    def clear_filters(self):
+
+        self.filter_frame.character_combo.set("All")
+        self.filter_frame.result_combo.set("All")
+        self.filter_frame.min_ascension_combo.set("0")
+        self.filter_frame.max_ascension_combo.set("10")
+        self.filter_frame.date_combo.set("All")
+
+        self.filter_frame.exclude_daily_checkbox.deselect()
+        self.filter_frame.exclude_custom_checkbox.deselect()
+
+        self.filter_frame.from_date_entry.delete(0, "end")
+        self.filter_frame.to_date_entry.delete(0, "end")
+
+        self.filter_frame.hide_custom_dates()
+        self.filter_frame.game_version_combo.set("All")
+
+        self.current_filter = RunFilter()
+
+        self.refresh_run_table()
