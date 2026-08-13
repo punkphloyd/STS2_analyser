@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from gui.details_frame import DetailsFrame
 from datetime import datetime, timedelta, date
-from tkinter import filedialog, ttk
+from tkinter import filedialog
 
 from data_models.run_metadata import RunMetadata
 from filters.filters import RunFilter
@@ -221,12 +221,8 @@ class App(ctk.CTk):
         })
 
         self.filter_frame.set_game_versions(versions)
-
+        self.current_filter = RunFilter()
         self.refresh_run_table()
-
-        self.status.set(
-            f"Found {len(self.run_metadata)} runs."
-        )
 
 
     # Function to refresh run table when changing/updating filters

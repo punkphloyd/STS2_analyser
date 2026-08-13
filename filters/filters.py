@@ -1,12 +1,10 @@
 from dataclasses import dataclass
-from datetime import datetime, date
-from pathlib import Path
+from datetime import date
 
 
 @dataclass(slots=True)
 class RunFilter:
 
-    date_mode: str = "all"
 
     start_date: date | None = None
     end_date: date | None = None

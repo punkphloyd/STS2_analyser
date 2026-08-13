@@ -61,6 +61,24 @@ class DetailsFrame(ctk.CTkFrame):
             padx=10
         )
 
+        self.game_version_label = ctk.CTkLabel(
+            self,
+            text="Game Version: -"
+        )
+        self.game_version_label.pack(
+            anchor="w",
+            padx=10
+        )
+
+        self.game_mode_label = ctk.CTkLabel(
+            self,
+            text="Game Mode: -"
+        )
+        self.game_mode_label.pack(
+            anchor="w",
+            padx=10
+        )
+
     def show_run(self, run: RunMetadata):
 
         self.date_label.configure(
@@ -79,6 +97,14 @@ class DetailsFrame(ctk.CTkFrame):
             text=f"Result: {'Victory' if run.victory else 'Defeat'}"
         )
 
+        self.game_version_label.configure(
+            text=f"Game Version: {run.game_version}"
+        )
+
+        self.game_mode_label.configure(
+            text=f"Game Mode: {run.game_mode.title()}"
+        )
+
     def clear(self):
 
         self.date_label.configure(
@@ -95,4 +121,12 @@ class DetailsFrame(ctk.CTkFrame):
 
         self.result_label.configure(
             text="Result: -"
+        )
+
+        self.game_version_label.configure(
+            text="Game Version: -"
+        )
+
+        self.game_mode_label.configure(
+            text="Game Mode: -"
         )

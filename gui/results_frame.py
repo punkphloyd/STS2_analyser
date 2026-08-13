@@ -49,7 +49,7 @@ class ResultsFrame(ctk.CTkFrame):
 
         self.results = ttk.Treeview(
             table_frame,
-            columns=("date", "character", "ascension", "result"),
+            columns=("date", "character", "ascension", "result", "game_version"),
             show="headings"
         )
 
@@ -69,6 +69,10 @@ class ResultsFrame(ctk.CTkFrame):
             "result",
             text="Result"
         )
+        self.results.heading(
+            "game_version",
+            text="Game Version"
+        )
 
         self.results.column(
             "date",
@@ -87,6 +91,10 @@ class ResultsFrame(ctk.CTkFrame):
             "result",
             width=100,
             anchor="center"
+        )
+        self.results.column(
+            "game_version",
+            width=110
         )
 
         self.results.bind(
