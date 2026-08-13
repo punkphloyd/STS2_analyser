@@ -50,4 +50,27 @@ def apply_filters(
             if run.start_time.date() <= filters.end_date
         ]
 
+    # Game mode filters
+    if filters.exclude_daily:
+        filtered_runs = [
+            run
+            for run in filtered_runs
+            if run.game_mode != "daily"
+        ]
+
+    if filters.exclude_custom:
+        filtered_runs = [
+            run
+            for run in filtered_runs
+            if run.game_mode != "custom"
+        ]
+
+    # Game version filter
+    if filters.game_version is not None:
+        filtered_runs = [
+            run
+            for run in filtered_runs
+            if run.game_version == filters.game_version
+        ]
+
     return filtered_runs

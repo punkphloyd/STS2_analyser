@@ -21,6 +21,8 @@ def make_run(
         character=character,
         ascension=ascension,
         victory=victory,
+        game_version="v0.107.1",
+        game_mode="standard",
     )
 
 

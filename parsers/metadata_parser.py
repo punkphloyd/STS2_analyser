@@ -27,5 +27,7 @@ def parse_metadata(path: Path) -> RunMetadata:
         start_time=datetime.fromtimestamp(data["start_time"]),
         character = CHARACTER_NAMES[player["character"]],
         ascension=data["ascension"],
-        victory=data["win"]
+        victory=data["win"],
+        game_version=data["build_id"],
+        game_mode=data["game_mode"]
     )

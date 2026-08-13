@@ -15,6 +15,8 @@ def make_run(victory: bool) -> RunMetadata:
         character="Ironclad",
         ascension=0,
         victory=victory,
+        game_version="v0.107.1",
+        game_mode="standard",
     )
 
 
