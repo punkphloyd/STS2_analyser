@@ -32,6 +32,10 @@ class App(ctk.CTk):
 
         self.run_metadata: list[RunMetadata] = []
         self.filtered_runs = []
+        self.plot_window = None
+        # App own the plot window (to allow live updates)
+
+
         # Frames definition
 
         self.results_frame = None
@@ -235,6 +239,9 @@ class App(ctk.CTk):
 
         self.results_frame.set_runs(self.filtered_runs)
 
+        if self.plot_window is not None:
+            self.plot_window.update_runs(self.filtered_runs)
+
         self.status.set(
             f"Found {len(self.filtered_runs)} runs."
         )
@@ -339,7 +346,7 @@ class App(ctk.CTk):
 
         if selected_plot == "Win Rate":
 
-            PlotWindow(
+            self.plot_window = PlotWindow(
                 self,
                 self.filtered_runs,
                 title="Win Rate"
@@ -347,7 +354,7 @@ class App(ctk.CTk):
 
         elif selected_plot == "Win Rate Over Time":
 
-            PlotWindow(
+            self.plot_window = PlotWindow(
                 self,
                 self.filtered_runs,
                 title="Win Rate Over Time",

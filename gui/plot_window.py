@@ -132,6 +132,18 @@ class PlotWindow(ctk.CTkToplevel):
             expand=True
         )
 
+    def update_runs(self, runs):
+
+        self.runs = runs
+
+        if self.plot_type == "Win Rate":
+            self.update_plot(self.view_combo.get())
+
+        elif self.plot_type == "Win Rate Over Time":
+            self.update_plot("Win Rate Over Time")
+
     def close(self):
+
+        self.master.plot_window = None
 
         self.destroy()
