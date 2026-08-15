@@ -12,3 +12,4 @@ class RunMetadata:
     victory: bool
     game_version: str
     game_mode: str
+    multiplayer: bool = False

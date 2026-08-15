@@ -30,4 +30,5 @@ def parse_metadata(path: Path) -> RunMetadata:
         victory=data["win"],
         game_version=data["build_id"],
         game_mode=data["game_mode"]
+        multiplayer=len(player_stats) > 1
     )
