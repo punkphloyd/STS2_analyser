@@ -7,6 +7,7 @@ from plots.win_rate import (
     plot_win_rate_by_character,
     plot_win_rate_by_ascension,
     plot_win_rate_by_character_and_ascension,
+    plot_win_rate_over_time,
 )
 
 
@@ -16,7 +17,8 @@ class PlotWindow(ctk.CTkToplevel):
         self,
         master,
         runs,
-        title="Quick Plot"
+        title="Quick Plot",
+        plot_type="Win Rate"
     ):
         super().__init__(master)
 
@@ -26,7 +28,7 @@ class PlotWindow(ctk.CTkToplevel):
         self.runs = runs
         self.figure = None
         self.canvas = None
-
+        self.plot_type = plot_type
         self.build_ui()
 
         self.protocol(
@@ -43,31 +45,32 @@ class PlotWindow(ctk.CTkToplevel):
             pady=(10, 0)
         )
 
-        view_label = ctk.CTkLabel(
-            controls_frame,
-            text="View:"
-        )
-        view_label.pack(
-            side="left",
-            padx=(10, 5)
-        )
+        if self.plot_type == "Win Rate":
+            view_label = ctk.CTkLabel(
+                controls_frame,
+                text="View:"
+            )
+            view_label.pack(
+                side="left",
+                padx=(10, 5)
+            )
 
-        self.view_combo = ctk.CTkComboBox(
-            controls_frame,
-            values=[
-                "Overall",
-                "By Character",
-                "By Ascension",
-                "By Character & Ascension",
-            ],
-            command=self.on_view_changed,
-            width=200
-        )
-        self.view_combo.set("Overall")
-        self.view_combo.pack(
-            side="left",
-            padx=(0, 10)
-        )
+            self.view_combo = ctk.CTkComboBox(
+                controls_frame,
+                values=[
+                    "Overall",
+                    "By Character",
+                    "By Ascension",
+                    "By Character & Ascension",
+                ],
+                command=self.on_view_changed,
+                width=200
+            )
+            self.view_combo.set("Overall")
+            self.view_combo.pack(
+                side="left",
+                padx=(0, 10)
+            )
 
         self.plot_frame = ctk.CTkFrame(self)
         self.plot_frame.pack(
@@ -77,7 +80,10 @@ class PlotWindow(ctk.CTkToplevel):
             pady=10
         )
 
-        self.update_plot("Overall")
+        if self.plot_type == "Win Rate":
+            self.update_plot("Overall")
+        elif self.plot_type == "Win Rate Over Time":
+            self.update_plot("Win Rate Over Time")
 
     def on_view_changed(self, value):
 
@@ -98,7 +104,8 @@ class PlotWindow(ctk.CTkToplevel):
             figure = plot_win_rate_by_character_and_ascension(
                 self.runs
             )
-
+        elif view == "Win Rate Over Time":
+            figure = plot_win_rate_over_time(self.runs)
         else:
             return
 

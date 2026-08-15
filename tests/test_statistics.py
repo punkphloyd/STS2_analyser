@@ -8,7 +8,9 @@ from analysis.statistics import (
     calculate_win_rate_by_ascension,
     calculate_win_rate_by_character_and_ascension,
 )
-
+from analysis.statistics import (
+    calculate_cumulative_win_rate,
+)
 
 def make_run(
     character: str,
@@ -122,3 +124,67 @@ def test_character_and_ascension_omits_empty_combinations():
 
     assert ("Ironclad", 1) not in result
     assert ("Silent", 0) not in result
+
+def test_calculate_cumulative_win_rate():
+
+    runs = [
+        make_run("Ironclad", 0, True),
+        make_run("Ironclad", 0, True),
+        make_run("Ironclad", 0, False),
+        make_run("Ironclad", 0, False),
+        make_run("Ironclad", 0, True),
+    ]
+
+    result = calculate_cumulative_win_rate(runs)
+
+    assert result == [
+        1.0,
+        1.0,
+        2 / 3,
+        0.5,
+        3 / 5,
+    ]
+
+def test_calculate_cumulative_win_rate_sorts_by_date():
+
+    runs = [
+        RunMetadata(
+            file_path=Path("test3.run"),
+            start_time=datetime(2026, 8, 3),
+            character="Ironclad",
+            ascension=0,
+            victory=False,
+            game_version="v0.107.1",
+            game_mode="standard",
+        ),
+        RunMetadata(
+            file_path=Path("test1.run"),
+            start_time=datetime(2026, 8, 1),
+            character="Ironclad",
+            ascension=0,
+            victory=True,
+            game_version="v0.107.1",
+            game_mode="standard",
+        ),
+        RunMetadata(
+            file_path=Path("test2.run"),
+            start_time=datetime(2026, 8, 2),
+            character="Ironclad",
+            ascension=0,
+            victory=False,
+            game_version="v0.107.1",
+            game_mode="standard",
+        ),
+    ]
+
+    result = calculate_cumulative_win_rate(runs)
+
+    assert result == [
+        1.0,
+        0.5,
+        1 / 3,
+    ]
+
+def test_calculate_cumulative_win_rate_empty():
+
+    assert calculate_cumulative_win_rate([]) == []

@@ -64,3 +64,30 @@ def calculate_win_rate_by_character_and_ascension(
         key: calculate_win_rate(grouped_runs[key])
         for key in grouped_runs
     }
+
+def calculate_cumulative_win_rate(
+    runs: list[RunMetadata],
+) -> list[float]:
+    """Return cumulative win rate after each run, ordered by start time."""
+
+    if not runs:
+        return []
+
+    sorted_runs = sorted(
+        runs,
+        key=lambda run: run.start_time
+    )
+
+    cumulative_win_rates = []
+    wins = 0
+
+    for index, run in enumerate(sorted_runs, start=1):
+
+        if run.victory:
+            wins += 1
+
+        cumulative_win_rates.append(
+            wins / index
+        )
+
+    return cumulative_win_rates

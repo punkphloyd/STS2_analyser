@@ -286,7 +286,6 @@ class App(ctk.CTk):
 
         now = datetime.now().date()
 
-        self.current_filter.date_mode = value
         self.current_filter.start_date = None
         self.current_filter.end_date = None
 
@@ -323,7 +322,6 @@ class App(ctk.CTk):
             )
             return
 
-        self.current_filter.date_mode = "Custom"
         self.current_filter.start_date = start_date
         self.current_filter.end_date = end_date
 
@@ -333,18 +331,27 @@ class App(ctk.CTk):
 
         selected_plot = self.quick_plots_frame.plot_combo.get()
 
-        if selected_plot == "Win Rate":
+        if not self.filtered_runs:
+            self.status.set(
+                "No runs available for plotting."
+            )
+            return
 
-            if not self.filtered_runs:
-                self.status.set(
-                    "No runs available for plotting."
-                )
-                return
+        if selected_plot == "Win Rate":
 
             PlotWindow(
                 self,
                 self.filtered_runs,
                 title="Win Rate"
+            )
+
+        elif selected_plot == "Win Rate Over Time":
+
+            PlotWindow(
+                self,
+                self.filtered_runs,
+                title="Win Rate Over Time",
+                plot_type="Win Rate Over Time"
             )
 
     def on_exclude_daily_changed(self):

@@ -29,7 +29,8 @@ class QuickPlotsFrame(ctk.CTkFrame):
         self.plot_combo = ctk.CTkComboBox(
             self,
             values=[
-                "Win Rate"
+                "Win Rate",
+                "Win Rate Over Time"
             ],
             width=150
         )

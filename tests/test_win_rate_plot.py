@@ -7,6 +7,7 @@ from plots.win_rate import (
     plot_win_rate_by_character,
     plot_win_rate_by_ascension,
     plot_win_rate_by_character_and_ascension,
+    plot_win_rate_over_time,
 )
 
 
@@ -83,3 +84,20 @@ def test_plot_win_rate_by_ascension():
 
     assert figure is not None
     assert len(figure.axes) == 1
+
+def test_plot_win_rate_over_time():
+
+    runs = [
+        make_run(True),
+        make_run(False),
+        make_run(True),
+    ]
+
+    figure = plot_win_rate_over_time(runs)
+
+    assert figure is not None
+    assert len(figure.axes) == 1
+
+def test_plot_win_rate_over_time_empty():
+
+    assert plot_win_rate_over_time([]) is None

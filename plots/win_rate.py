@@ -1,6 +1,7 @@
 from matplotlib.figure import Figure
 
 from analysis.statistics import (
+    calculate_cumulative_win_rate,
     calculate_win_rate,
     calculate_win_rate_by_character,
     calculate_win_rate_by_ascension,
@@ -184,6 +185,50 @@ def plot_win_rate_by_character_and_ascension(
                     va="center",
                 )
 
+    figure.tight_layout()
+
+    return figure
+
+def plot_win_rate_over_time(
+    runs: list[RunMetadata],
+):
+    """Create a line chart showing cumulative win rate over time."""
+
+    if not runs:
+        return None
+
+    sorted_runs = sorted(
+        runs,
+        key=lambda run: run.start_time
+    )
+
+    cumulative_win_rates = calculate_cumulative_win_rate(
+        sorted_runs
+    )
+
+    dates = [
+        run.start_time
+        for run in sorted_runs
+    ]
+
+    figure = Figure(figsize=(8, 4))
+    axis = figure.add_subplot(111)
+
+    axis.plot(
+        dates,
+        [
+            win_rate * 100
+            for win_rate in cumulative_win_rates
+        ],
+        marker="o",
+    )
+
+    axis.set_ylim(0, 100)
+    axis.set_xlabel("Date")
+    axis.set_ylabel("Win Rate (%)")
+    axis.set_title("Win Rate Over Time")
+
+    figure.autofmt_xdate()
     figure.tight_layout()
 
     return figure
