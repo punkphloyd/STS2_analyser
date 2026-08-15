@@ -220,6 +220,25 @@ class FilterFrame(ctk.CTkFrame):
         )
 
         # ============================================================
+        # Multiplayer filter controls (currently hard coded on)
+        # ============================================================
+
+        self.exclude_multiplayer_checkbox = ctk.CTkCheckBox(
+            controls_frame,
+            text="Exclude multiplayer runs"
+        )
+
+        self.exclude_multiplayer_checkbox.select()
+        self.exclude_multiplayer_checkbox.configure(
+            state="disabled"
+        )
+
+        self.exclude_multiplayer_checkbox.pack(
+            side="left",
+            padx=(0, 10)
+        )
+
+        # ============================================================
         # Secondary frame for version filtering
         # ============================================================
 

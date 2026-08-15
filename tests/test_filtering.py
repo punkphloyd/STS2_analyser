@@ -7,8 +7,9 @@ from filters.run_filters import apply_filters
 
 
 def make_run(
-    game_mode: str,
-    game_version: str,
+    game_mode: str = "standard",
+    game_version: str = "v0.107.1",
+    multiplayer: bool = False,
 ) -> RunMetadata:
     return RunMetadata(
         file_path=Path("test.run"),
@@ -18,6 +19,7 @@ def make_run(
         victory=True,
         game_version=game_version,
         game_mode=game_mode,
+        multiplayer=multiplayer,
     )
 
 def test_daily_runs_included_by_default():
@@ -125,3 +127,32 @@ def test_game_version_and_mode_filters_combine():
     assert len(result) == 1
     assert result[0].game_mode == "standard"
     assert result[0].game_version == "v0.107.1"
+
+def test_exclude_multiplayer():
+    runs = [
+        make_run(multiplayer=False),
+        make_run(multiplayer=True),
+    ]
+
+    filters = RunFilter(
+        exclude_multiplayer=True
+    )
+
+    result = apply_filters(runs, filters)
+
+    assert len(result) == 1
+    assert result[0].multiplayer is False
+
+def test_include_multiplayer():
+    runs = [
+        make_run(multiplayer=False),
+        make_run(multiplayer=True),
+    ]
+
+    filters = RunFilter(
+        exclude_multiplayer=False
+    )
+
+    result = apply_filters(runs, filters)
+
+    assert len(result) == 2

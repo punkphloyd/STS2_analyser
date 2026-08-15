@@ -18,4 +18,5 @@ class RunFilter:
 
     exclude_daily: bool = False
     exclude_custom: bool = False
+    exclude_multiplayer: bool = True
     game_version: str | None = None

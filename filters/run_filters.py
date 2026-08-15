@@ -65,6 +65,14 @@ def apply_filters(
             if run.game_mode != "custom"
         ]
 
+    # Filter out multiplayer runs
+    if filters.exclude_multiplayer:
+        filtered_runs = [
+            run
+            for run in filtered_runs
+            if not run.multiplayer
+        ]
+
     # Game version filter
     if filters.game_version is not None:
         filtered_runs = [

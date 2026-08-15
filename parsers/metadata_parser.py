@@ -13,6 +13,8 @@ CHARACTER_NAMES = {
     "CHARACTER.NECROBINDER": "Necrobinder",
 }
 
+def is_multiplayer(data: dict) -> bool:
+    return len(data.get("players", [])) > 1
 
 def parse_metadata(path: Path) -> RunMetadata:
     """Parse a Slay the Spire 2 .run file into a RunMetadata object."""
@@ -29,6 +31,6 @@ def parse_metadata(path: Path) -> RunMetadata:
         ascension=data["ascension"],
         victory=data["win"],
         game_version=data["build_id"],
-        game_mode=data["game_mode"]
-        multiplayer=len(player_stats) > 1
+        game_mode=data["game_mode"],
+        multiplayer=is_multiplayer(data),
     )
