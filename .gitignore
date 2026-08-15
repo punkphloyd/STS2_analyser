@@ -13,8 +13,5 @@ __pycache__/
 Thumbs.db
 .DS_Store
 
-# Testbed run files
-*.run
-
 # Scratch directory
 scratch/
