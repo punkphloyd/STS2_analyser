@@ -1,8 +1,10 @@
 from pathlib import Path
 
+from data_models.run_data import RunData
 from data_models.run_metadata import RunMetadata
 from discovery.run_discovery import discover_runs
 from parsers.metadata_parser import parse_metadata
+from parsers.run_parser import parse_run
 
 
 def load_run_metadata(directory: str | Path) -> list[RunMetadata]:
@@ -20,3 +22,13 @@ def load_run_metadata(directory: str | Path) -> list[RunMetadata]:
     )
 
     return metadata
+
+
+def load_run_data(
+    runs: list[RunMetadata],
+) -> list[RunData]:
+
+    return [
+        parse_run(run.file_path)
+        for run in runs
+    ]

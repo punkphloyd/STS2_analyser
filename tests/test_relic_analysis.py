@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-
+from parsers.run_parser import parse_run
 from analysis.relic_analysis import calculate_neow_relic_statistics
 from data_models.run_data import RunData
 from data_models.run_metadata import RunMetadata
@@ -135,3 +135,23 @@ def test_neow_relic_offered_but_never_picked():
     assert result["HEFTY_TABLET"].pick_rate == 0.0
     assert result["HEFTY_TABLET"].wins == 0
     assert result["HEFTY_TABLET"].win_rate is None
+
+
+EXAMPLE_RUNFILES = Path("example_runfiles")
+
+
+def test_neow_relic_analysis_from_example_runs():
+
+    paths = [
+        EXAMPLE_RUNFILES / "1785257698.run",
+        EXAMPLE_RUNFILES / "1780176025.run",
+    ]
+
+    runs = [
+        parse_run(path)
+        for path in paths
+    ]
+
+    result = calculate_neow_relic_statistics(runs)
+
+    assert result

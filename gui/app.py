@@ -8,18 +8,21 @@ from filters.filters import RunFilter
 from filters.run_filters import apply_filters
 from gui.filter_frame import FilterFrame
 from gui.results_frame import ResultsFrame
-from services.run_loader import load_run_metadata
+from services.run_loader import (
+    load_run_data,
+    load_run_metadata,
+)
 from gui.directory_frame import DirectoryFrame
 from gui.quick_plots_frame import QuickPlotsFrame
 from gui.plot_window import PlotWindow
-
+from gui.analysis_window import AnalysisWindow
 
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
         self.title("Slay the Spire 2 - Run Analyser")
-        self.geometry("1280x720")
+        self.geometry("1600x900")
 
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
@@ -32,12 +35,13 @@ class App(ctk.CTk):
 
         self.run_metadata: list[RunMetadata] = []
         self.filtered_runs = []
+
+        # Sub window declarations
         self.plot_window = None
-        # App own the plot window (to allow live updates)
+        self.analysis_window = None
 
 
         # Frames definition
-
         self.results_frame = None
         self.details_frame = None
         self.filter_frame = None
@@ -187,7 +191,25 @@ class App(ctk.CTk):
             sticky="ew"
         )
         # ============================================================
-        # 8. Status
+        # 8. Analysis
+        # ============================================================
+
+        neow_analysis_button = ctk.CTkButton(
+            self,
+            text="Neow's Bonus Relic Analysis",
+            command=self.open_neow_analysis
+        )
+
+        neow_analysis_button.grid(
+            row=7,
+            column=0,
+            padx=20,
+            pady=(5, 10),
+            sticky="w"
+        )
+
+        # ============================================================
+        # 9. Status
         # ============================================================
 
         status_label = ctk.CTkLabel(
@@ -196,11 +218,10 @@ class App(ctk.CTk):
         )
 
         status_label.grid(
-            row=7,
+            row=8,
             column=0,
             pady=10
         )
-
 
     def browse_directory(self):
 
@@ -241,6 +262,19 @@ class App(ctk.CTk):
 
         if self.plot_window is not None:
             self.plot_window.update_runs(self.filtered_runs)
+
+        if self.analysis_window is not None:
+            try:
+                if self.analysis_window.winfo_exists():
+                    run_data = load_run_data(
+                        self.filtered_runs
+                    )
+
+                    self.analysis_window.update_runs(
+                        run_data
+                    )
+            except Exception:
+                pass
 
         self.status.set(
             f"Found {len(self.filtered_runs)} runs."
@@ -360,6 +394,31 @@ class App(ctk.CTk):
                 title="Win Rate Over Time",
                 plot_type="Win Rate Over Time"
             )
+
+    # Open neow relic analysis window
+    def open_neow_analysis(self):
+
+        if not self.filtered_runs:
+            self.status.set(
+                "No runs available for analysis."
+            )
+            return
+
+        run_data = load_run_data(
+            self.filtered_runs
+        )
+
+        if self.analysis_window is not None:
+            try:
+                if self.analysis_window.winfo_exists():
+                    self.analysis_window.destroy()
+            except Exception:
+                pass
+
+        self.analysis_window = AnalysisWindow(
+            self,
+            run_data,
+        )
 
     def on_exclude_daily_changed(self):
 
