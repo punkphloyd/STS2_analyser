@@ -16,6 +16,8 @@ from gui.directory_frame import DirectoryFrame
 from gui.quick_plots_frame import QuickPlotsFrame
 from gui.plot_window import PlotWindow
 from gui.analysis_window import AnalysisWindow
+from gui.death_analysis_window import DeathAnalysisWindow
+
 
 class App(ctk.CTk):
     def __init__(self):
@@ -39,7 +41,7 @@ class App(ctk.CTk):
         # Sub window declarations
         self.plot_window = None
         self.analysis_window = None
-
+        self.death_analysis_window = None
 
         # Frames definition
         self.results_frame = None
@@ -208,6 +210,22 @@ class App(ctk.CTk):
             sticky="w"
         )
 
+        death_analysis_button = ctk.CTkButton(
+            self,
+            text="Death Analysis",
+            command=self.open_death_analysis
+        )
+
+        death_analysis_button.grid(
+            row=7,
+            column=1,
+            padx=20,
+            pady=(5,10),
+            sticky="w"
+        )
+
+
+
         # ============================================================
         # 9. Status
         # ============================================================
@@ -271,6 +289,19 @@ class App(ctk.CTk):
                     )
 
                     self.analysis_window.update_runs(
+                        run_data
+                    )
+            except Exception:
+                pass
+
+        if self.death_analysis_window is not None:
+            try:
+                if self.death_analysis_window.winfo_exists():
+                    run_data = load_run_data(
+                        self.filtered_runs
+                    )
+
+                    self.death_analysis_window.update_runs(
                         run_data
                     )
             except Exception:
@@ -475,3 +506,27 @@ class App(ctk.CTk):
         self.current_filter = RunFilter()
 
         self.refresh_run_table()
+
+    def open_death_analysis(self):
+
+        if not self.filtered_runs:
+            self.status.set(
+                "No runs available for analysis."
+            )
+            return
+
+        run_data = load_run_data(
+            self.filtered_runs
+        )
+
+        if self.death_analysis_window is not None:
+            try:
+                if self.death_analysis_window.winfo_exists():
+                    self.death_analysis_window.destroy()
+            except Exception:
+                pass
+
+        self.death_analysis_window = DeathAnalysisWindow(
+            self,
+            run_data,
+        )
