@@ -1,10 +1,12 @@
 from dataclasses import dataclass, field
 
 from data_models.run_metadata import RunMetadata
-
+from data_models.death_data import DeathData
 
 @dataclass(slots=True)
 class RunData:
     metadata: RunMetadata
+    floor_reached: int
     neow_bonus_relic: str | None = None
     neow_relic_choices: list[str] = field(default_factory=list)
+    death_data: DeathData | None = None

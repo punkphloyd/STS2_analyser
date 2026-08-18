@@ -25,6 +25,7 @@ def make_run(
 
     return RunData(
         metadata=metadata,
+        floor_reached=30,
         neow_bonus_relic=selected_relic,
         neow_relic_choices=offered_relics,
     )
