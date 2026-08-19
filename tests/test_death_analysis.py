@@ -164,29 +164,6 @@ def test_calculate_top_killed_by_empty():
 def test_calculate_floor_statistics_by_character():
 
     runs = [
-        make_run(20, False),
-        make_run(30, False),
-    ]
-
-    runs[0].metadata.character = "Ironclad"
-    runs[1].metadata.character = "Silent"
-
-    result = calculate_floor_statistics_by_character(runs)
-
-    assert set(result.keys()) == {
-        "Ironclad",
-        "Silent",
-    }
-
-    assert result["Ironclad"].runs == 1
-    assert result["Ironclad"].average == 20
-
-    assert result["Silent"].runs == 1
-    assert result["Silent"].average == 30
-
-def test_calculate_floor_statistics_by_character():
-
-    runs = [
         make_run(20, False, character="Ironclad"),
         make_run(30, False, character="Silent"),
         make_run(40, True, character="Ironclad"),
@@ -204,6 +181,7 @@ def test_calculate_floor_statistics_by_character():
 
     assert result["Silent"].runs == 1
     assert result["Silent"].average == 30
+
 
 def test_calculate_floor_statistics_by_ascension():
 

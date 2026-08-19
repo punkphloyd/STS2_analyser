@@ -2,6 +2,7 @@ import customtkinter as ctk
 
 from analysis.relic_analysis import calculate_neow_relic_statistics
 from data_models.run_data import RunData
+from gui.analysis_table import AnalysisTable
 
 
 class AnalysisWindow(ctk.CTkToplevel):
@@ -102,129 +103,46 @@ class AnalysisWindow(ctk.CTkToplevel):
             "Win Rate",
         ]
 
-        # Shared column configuration.
-        # The first column gets more space for relic names.
-        column_weights = [
-            3,
-            1,
-            1,
-            2,
-            1,
-            2,
-        ]
+        rows = []
 
-        # ============================================================
-        # Header
-        # ============================================================
+        for relic, stats in statistics.items():
 
-        header_frame = ctk.CTkFrame(
-            self.table_frame,
-            corner_radius=6,
-            fg_color="#D9E6F2"
-        )
-        header_frame.grid(
-            row=0,
-            column=0,
-            columnspan=len(headers),
-            sticky="ew",
-            padx=5,
-            pady=(5, 5)
-        )
-
-        for column, weight in enumerate(column_weights):
-            header_frame.grid_columnconfigure(
-                column,
-                weight=weight
-            )
-
-        for column, header in enumerate(headers):
-
-            label = ctk.CTkLabel(
-                header_frame,
-                text=header,
-                text_color="#263746",
-                font=ctk.CTkFont(
-                    size=13,
-                    weight="bold"
-                ),
-                anchor="w" if column == 0 else "center"
-            )
-
-            label.grid(
-                row=0,
-                column=column,
-                padx=15,
-                pady=10,
-                sticky="ew"
-            )
-
-        # ============================================================
-        # Rows
-        # ============================================================
-
-        for row, (relic, stats) in enumerate(
-            statistics.items(),
-            start=1
-        ):
-
-            if row % 2 == 0:
-                row_colour = "#E8EEF3"
-            else:
-                row_colour = "#F7F8F9"
-
-            row_frame = ctk.CTkFrame(
-                self.table_frame,
-                corner_radius=5,
-                fg_color=row_colour
-            )
-            row_frame.grid(
-                row=row,
-                column=0,
-                columnspan=len(headers),
-                sticky="ew",
-                padx=5,
-                pady=2
-            )
-
-            for column, weight in enumerate(column_weights):
-                row_frame.grid_columnconfigure(
-                    column,
-                    weight=weight
-                )
-
-            values = [
-                self.format_relic_name(relic),
-                stats.offered,
-                stats.picks,
-                f"{stats.pick_rate:.1%}",
-                stats.wins,
+            rows.append(
                 (
-                    f"{stats.win_rate:.1%}"
-                    if stats.win_rate is not None
-                    else "N/A"
-                ),
-            ]
-
-            for column, value in enumerate(values):
-
-                label = ctk.CTkLabel(
-                    row_frame,
-                    text=str(value),
-                    text_color="#263746",
-                    font=ctk.CTkFont(
-                        size=13,
-                        weight="bold" if column == 0 else "normal"
+                    self.format_relic_name(relic),
+                    stats.offered,
+                    stats.picks,
+                    stats.pick_rate,
+                    stats.wins,
+                    (
+                        stats.win_rate
+                        if stats.win_rate is not None
+                        else "N/A"
                     ),
-                    anchor="w" if column == 0 else "center"
                 )
+            )
 
-                label.grid(
-                    row=0,
-                    column=column,
-                    padx=15,
-                    pady=9,
-                    sticky="ew"
-                )
+        table = AnalysisTable(
+            self.table_frame,
+            headers,
+            rows,
+            percentage_columns={3, 5},
+            column_weights=[
+                3,
+                1,
+                1,
+                2,
+                1,
+                2,
+            ],
+        )
+
+        table.pack(
+            fill="x",
+            expand=True,
+            padx=5,
+            pady=5,
+        )
 
     @staticmethod
     def format_relic_name(relic: str) -> str:

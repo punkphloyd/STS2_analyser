@@ -281,31 +281,7 @@ class App(ctk.CTk):
         if self.plot_window is not None:
             self.plot_window.update_runs(self.filtered_runs)
 
-        if self.analysis_window is not None:
-            try:
-                if self.analysis_window.winfo_exists():
-                    run_data = load_run_data(
-                        self.filtered_runs
-                    )
-
-                    self.analysis_window.update_runs(
-                        run_data
-                    )
-            except Exception:
-                pass
-
-        if self.death_analysis_window is not None:
-            try:
-                if self.death_analysis_window.winfo_exists():
-                    run_data = load_run_data(
-                        self.filtered_runs
-                    )
-
-                    self.death_analysis_window.update_runs(
-                        run_data
-                    )
-            except Exception:
-                pass
+        self.update_analysis_windows(self.filtered_runs)
 
         self.status.set(
             f"Found {len(self.filtered_runs)} runs."
@@ -529,4 +505,31 @@ class App(ctk.CTk):
         self.death_analysis_window = DeathAnalysisWindow(
             self,
             run_data,
+        )
+
+    def update_analysis_window(
+            self,
+            window,
+            runs,
+    ):
+        if window is None:
+            return
+
+        if not window.winfo_exists():
+            return
+
+        run_data = load_run_data(runs)
+
+        window.update_runs(run_data)
+
+    def update_analysis_windows(self, runs):
+
+        self.update_analysis_window(
+            self.analysis_window,
+            runs,
+        )
+
+        self.update_analysis_window(
+            self.death_analysis_window,
+            runs,
         )

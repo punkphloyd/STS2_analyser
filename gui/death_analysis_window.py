@@ -8,6 +8,7 @@ from analysis.death_analysis import (
     calculate_floor_statistics_by_character_and_ascension,
     calculate_top_killed_by,
 )
+from gui.analysis_table import AnalysisTable
 
 
 class DeathAnalysisWindow(ctk.CTkToplevel):
@@ -260,10 +261,15 @@ class DeathAnalysisWindow(ctk.CTkToplevel):
         else:
             return
 
-        self.build_table(
+        table = AnalysisTable(
             self.floor_table_frame,
             columns,
-            rows
+            rows,
+        )
+
+        table.pack(
+            fill="x",
+            expand=True,
         )
 
     def build_killed_by_table(self):
@@ -313,153 +319,17 @@ class DeathAnalysisWindow(ctk.CTkToplevel):
             in enumerate(statistics, start=1)
         ]
 
-        self.build_table(
+        table = AnalysisTable(
             self.death_section_frame,
             columns,
             rows,
-            percentage_columns={3}
+            percentage_columns={3},
         )
 
-    def build_table(
-        self,
-        parent,
-        columns,
-        rows,
-        percentage_columns=None
-    ):
-
-        if percentage_columns is None:
-            percentage_columns = set()
-
-        table = ctk.CTkFrame(
-            parent,
-            corner_radius=8
-        )
         table.pack(
             fill="x",
-            expand=True
+            expand=True,
         )
-
-        weights = [
-            3,
-            1,
-            1,
-            1,
-            1,
-            1,
-        ]
-
-        if len(columns) == 4:
-            weights = [
-                1,
-                4,
-                1,
-                2,
-            ]
-
-        for column, weight in enumerate(weights[:len(columns)]):
-            table.grid_columnconfigure(
-                column,
-                weight=weight
-            )
-
-        header_frame = ctk.CTkFrame(
-            table,
-            fg_color="transparent"
-        )
-        header_frame.grid(
-            row=0,
-            column=0,
-            columnspan=len(columns),
-            sticky="ew"
-        )
-
-        for column, heading in enumerate(columns):
-
-            anchor = (
-                "w"
-                if column == 0
-                else "e"
-            )
-
-            label = ctk.CTkLabel(
-                header_frame,
-                text=heading,
-                font=ctk.CTkFont(
-                    size=13,
-                    weight="bold"
-                ),
-                anchor=anchor,
-                text_color="#202020",
-            )
-
-            label.grid(
-                row=0,
-                column=column,
-                sticky="ew",
-                padx=10,
-                pady=8
-            )
-
-            header_frame.grid_columnconfigure(
-                column,
-                weight=weights[column]
-            )
-
-        for row_index, row in enumerate(rows, start=1):
-
-            background = (
-                "#EAF2F8"
-                if row_index % 2 == 0
-                else "#F5F5F5"
-            )
-
-            row_frame = ctk.CTkFrame(
-                table,
-                fg_color=background,
-                corner_radius=0
-            )
-            row_frame.grid(
-                row=row_index,
-                column=0,
-                columnspan=len(columns),
-                sticky="ew"
-            )
-
-            for column, value in enumerate(row):
-
-                if column in percentage_columns:
-                    text = f"{value:.1%}"
-                elif isinstance(value, float):
-                    text = f"{value:.1f}"
-                else:
-                    text = str(value)
-
-                anchor = (
-                    "w"
-                    if column == 0
-                    else "e"
-                )
-
-                label = ctk.CTkLabel(
-                    row_frame,
-                    text=text,
-                    anchor=anchor,
-                    text_color="#202020",
-                )
-
-                label.grid(
-                    row=0,
-                    column=column,
-                    sticky="ew",
-                    padx=10,
-                    pady=6
-                )
-
-                row_frame.grid_columnconfigure(
-                    column,
-                    weight=weights[column]
-                )
 
     @staticmethod
     def build_empty_message(parent, text):
