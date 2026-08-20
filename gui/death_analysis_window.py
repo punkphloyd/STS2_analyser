@@ -1,6 +1,8 @@
 import customtkinter as ctk
 
-from data_models.run_data import RunData
+from analysis.combat_analysis import (
+    calculate_elite_boss_statistics,
+)
 from analysis.death_analysis import (
     calculate_floor_statistics,
     calculate_floor_statistics_by_ascension,
@@ -8,7 +10,9 @@ from analysis.death_analysis import (
     calculate_floor_statistics_by_character_and_ascension,
     calculate_top_killed_by,
 )
+from data_models.run_data import RunData
 from gui.analysis_table import AnalysisTable
+from gui.formatters import format_encounter_name
 
 
 class DeathAnalysisWindow(ctk.CTkToplevel):
@@ -21,7 +25,8 @@ class DeathAnalysisWindow(ctk.CTkToplevel):
         super().__init__(master)
 
         self.title("Death Analysis")
-        self.geometry("950x750")
+        self.geometry("1200x750")
+        self.minsize(1000, 600)
 
         self.runs = runs
 
@@ -101,7 +106,7 @@ class DeathAnalysisWindow(ctk.CTkToplevel):
 
         self.scroll_frame = ctk.CTkScrollableFrame(
             self,
-            label_text="Floor Reached"
+            corner_radius=10,
         )
         self.scroll_frame.pack(
             fill="both",
@@ -110,8 +115,58 @@ class DeathAnalysisWindow(ctk.CTkToplevel):
             pady=(0, 20)
         )
 
-        self.floor_table_frame = ctk.CTkFrame(
+        self.content_frame = ctk.CTkFrame(
             self.scroll_frame,
+            fg_color="transparent"
+        )
+        self.content_frame.pack(
+            fill="both",
+            expand=True
+        )
+
+        self.content_frame.grid_columnconfigure(
+            0,
+            weight=1,
+            uniform="analysis",
+        )
+        self.content_frame.grid_columnconfigure(
+            1,
+            weight=1,
+            uniform="analysis",
+        )
+
+        self.left_frame = ctk.CTkFrame(
+            self.content_frame,
+            fg_color="transparent"
+        )
+        self.left_frame.grid(
+            row=0,
+            column=0,
+            sticky="nsew",
+            padx=(0, 8)
+        )
+
+        self.right_frame = ctk.CTkFrame(
+            self.content_frame,
+            fg_color="transparent"
+        )
+        self.right_frame.grid(
+            row=0,
+            column=1,
+            sticky="nsew",
+            padx=(8, 0)
+        )
+
+        self.floor_section_frame = ctk.CTkFrame(
+            self.left_frame,
+            fg_color="transparent"
+        )
+        self.floor_section_frame.pack(
+            fill="x"
+        )
+
+        self.floor_table_frame = ctk.CTkFrame(
+            self.floor_section_frame,
             fg_color="transparent"
         )
         self.floor_table_frame.pack(
@@ -120,7 +175,7 @@ class DeathAnalysisWindow(ctk.CTkToplevel):
         )
 
         self.death_section_frame = ctk.CTkFrame(
-            self.scroll_frame,
+            self.left_frame,
             fg_color="transparent"
         )
         self.death_section_frame.pack(
@@ -128,8 +183,17 @@ class DeathAnalysisWindow(ctk.CTkToplevel):
             pady=(30, 0)
         )
 
+        self.encounter_section_frame = ctk.CTkFrame(
+            self.right_frame,
+            fg_color="transparent"
+        )
+        self.encounter_section_frame.pack(
+            fill="x"
+        )
+
         self.build_floor_table("Overall")
         self.build_killed_by_table()
+        self.build_encounter_table()
 
     def get_run_summary(self):
 
@@ -152,6 +216,20 @@ class DeathAnalysisWindow(ctk.CTkToplevel):
 
         for widget in self.floor_table_frame.winfo_children():
             widget.destroy()
+
+        title = ctk.CTkLabel(
+            self.floor_section_frame,
+            text="Floor Reached",
+            font=ctk.CTkFont(
+                size=18,
+                weight="bold"
+            )
+        )
+
+        title.pack(
+            anchor="w",
+            pady=(0, 10)
+        )
 
         if view == "Overall":
             statistics = calculate_floor_statistics(
@@ -331,6 +409,73 @@ class DeathAnalysisWindow(ctk.CTkToplevel):
             expand=True,
         )
 
+    def build_encounter_table(self):
+
+        for widget in self.encounter_section_frame.winfo_children():
+            widget.destroy()
+
+        title = ctk.CTkLabel(
+            self.encounter_section_frame,
+            text="Elite & Boss Performance",
+            font=ctk.CTkFont(
+                size=18,
+                weight="bold"
+            )
+        )
+        title.pack(
+            anchor="w",
+            pady=(0, 10)
+        )
+
+        statistics = calculate_elite_boss_statistics(
+            self.runs
+        )
+
+        if not statistics:
+            self.build_empty_message(
+                self.encounter_section_frame,
+                "No elite or boss encounters available for analysis."
+            )
+            return
+
+        columns = [
+            "Type",
+            "Encounter",
+            "Faced",
+            "Won",
+            "Success Rate",
+        ]
+
+        rows = [
+            (
+                statistics[encounter].encounter_type.title(),
+                format_encounter_name(encounter),
+                statistics[encounter].faced,
+                statistics[encounter].wins,
+                statistics[encounter].success_rate,
+            )
+            for encounter in sorted(statistics)
+        ]
+
+        table = AnalysisTable(
+            self.encounter_section_frame,
+            columns,
+            rows,
+            percentage_columns={4},
+            column_weights=[
+                1,
+                3,
+                1,
+                1,
+                2,
+            ],
+        )
+
+        table.pack(
+            fill="x",
+            expand=True,
+        )
+
     @staticmethod
     def build_empty_message(parent, text):
 
@@ -356,6 +501,7 @@ class DeathAnalysisWindow(ctk.CTkToplevel):
         )
 
         self.build_killed_by_table()
+        self.build_encounter_table()
 
     def close(self):
 

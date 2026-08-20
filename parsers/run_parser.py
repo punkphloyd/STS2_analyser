@@ -3,6 +3,7 @@ from pathlib import Path
 
 from data_models.run_data import RunData
 from parsers.metadata_parser import parse_metadata
+from data_models.encounter_data import EncounterData
 from data_models.death_data import DeathData
 
 
@@ -65,6 +66,7 @@ def parse_run(path: Path) -> RunData:
 
     floor_reached = parse_floor_reached(data)
     death_data = parse_death_data(data)
+    encounters = parse_encounter_data(data)
 
     return RunData(
         metadata=metadata,
@@ -72,6 +74,7 @@ def parse_run(path: Path) -> RunData:
         neow_bonus_relic=neow_bonus_relic,
         neow_relic_choices=neow_relic_choices,
         death_data=death_data,
+        encounters=encounters
     )
 
 def parse_death_data(data: dict) -> DeathData | None:
@@ -118,3 +121,86 @@ def parse_floor_reached(data: dict) -> int:
         len(act)
         for act in map_point_history
     )
+
+def parse_encounter_data(
+    data: dict,
+) -> list[EncounterData]:
+    """Extract elite and boss encounters from a run."""
+
+    encounters = []
+
+    for map_point_group in data.get(
+        "map_point_history",
+        [],
+    ):
+        for map_point in map_point_group:
+
+            map_point_type = map_point.get(
+                "map_point_type"
+            )
+
+            if map_point_type not in {
+                "elite",
+                "boss",
+            }:
+                continue
+
+            rooms = map_point.get(
+                "rooms",
+                []
+            )
+
+            player_stats = map_point.get(
+                "player_stats",
+                []
+            )
+
+            if not player_stats:
+                continue
+
+            stats = player_stats[0]
+
+            for room in rooms:
+
+                if room.get("room_type") != map_point_type:
+                    continue
+
+                encounter = room.get(
+                    "model_id"
+                )
+
+                if encounter is None:
+                    continue
+
+                encounters.append(
+                    EncounterData(
+                        encounter=encounter,
+                        encounter_type=map_point_type,
+                        damage_taken=stats.get(
+                            "damage_taken",
+                            0,
+                        ),
+                        current_hp=stats.get(
+                            "current_hp",
+                            0,
+                        ),
+                        max_hp=stats.get(
+                            "max_hp",
+                            0,
+                        ),
+                        hp_healed=stats.get(
+                            "hp_healed",
+                            0,
+                        ),
+                        max_hp_gained=stats.get(
+                            "max_hp_gained",
+                            0,
+                        ),
+                        max_hp_lost=stats.get(
+                            "max_hp_lost",
+                            0,
+                        ),
+                    )
+                )
+
+    return encounters

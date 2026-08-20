@@ -3,6 +3,7 @@ from pathlib import Path
 
 from parsers.run_parser import (
     parse_death_data,
+    parse_encounter_data,
     parse_floor_reached,
     parse_neow_relic_choices,
     parse_run,
@@ -120,3 +121,105 @@ def test_parse_floor_reached():
     result = parse_floor_reached(data)
 
     assert result == 31
+
+def test_parse_successful_elite_encounter():
+
+    path = EXAMPLE_RUNFILES / "1785257698.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_encounter_data(data)
+
+    entomancer = next(
+        encounter
+        for encounter in result
+        if encounter.encounter
+        == "ENCOUNTER.PHANTASMAL_GARDENERS_ELITE"
+    )
+
+    assert entomancer.encounter_type == "elite"
+    assert entomancer.damage_taken == 33
+    assert entomancer.current_hp == 18
+    assert entomancer.max_hp == 80
+    assert entomancer.hp_healed == 6
+    assert entomancer.max_hp_gained == 0
+    assert entomancer.max_hp_lost == 0
+
+
+def test_parse_successful_boss_encounter():
+
+    path = EXAMPLE_RUNFILES / "1785257698.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_encounter_data(data)
+
+    boss = next(
+        encounter
+        for encounter in result
+        if encounter.encounter
+        == "ENCOUNTER.WATERFALL_GIANT_BOSS"
+    )
+
+    assert boss.encounter_type == "boss"
+    assert boss.damage_taken == 60
+    assert boss.current_hp == 17
+    assert boss.max_hp == 80
+    assert boss.hp_healed == 6
+    assert boss.max_hp_gained == 0
+    assert boss.max_hp_lost == 0
+
+
+def test_parse_fatal_elite_encounter():
+
+    path = EXAMPLE_RUNFILES / "1785257698.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_encounter_data(data)
+
+    entomancer = next(
+        encounter
+        for encounter in result
+        if encounter.encounter
+        == "ENCOUNTER.ENTOMANCER_ELITE"
+    )
+
+    assert entomancer.encounter_type == "elite"
+    assert entomancer.damage_taken == 55
+    assert entomancer.current_hp == 0
+    assert entomancer.max_hp == 80
+    assert entomancer.hp_healed == 0
+    assert entomancer.max_hp_gained == 0
+    assert entomancer.max_hp_lost == 0
+
+
+def test_parse_run_includes_encounters():
+
+    path = EXAMPLE_RUNFILES / "1785257698.run"
+
+    result = parse_run(path)
+
+    assert len(result.encounters) > 0
+
+    assert any(
+        encounter.encounter
+        == "ENCOUNTER.PHANTASMAL_GARDENERS_ELITE"
+        for encounter in result.encounters
+    )
+
+    assert any(
+        encounter.encounter
+        == "ENCOUNTER.WATERFALL_GIANT_BOSS"
+        for encounter in result.encounters
+    )
+
+    assert any(
+        encounter.encounter
+        == "ENCOUNTER.ENTOMANCER_ELITE"
+        and encounter.current_hp == 0
+        for encounter in result.encounters
+    )
