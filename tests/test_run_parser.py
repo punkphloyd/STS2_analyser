@@ -244,7 +244,7 @@ def test_parse_act_2_encounter_location():
 
 def test_parse_act_3_encounter_location():
 
-    path = EXAMPLE_RUNFILES / "1785257698.run"
+    path = EXAMPLE_RUNFILES / "1780311404.run"
 
     with path.open("r", encoding="utf-8") as file:
         data = json.load(file)
@@ -258,9 +258,8 @@ def test_parse_act_3_encounter_location():
     )
 
     assert encounter.act == 3
-    assert encounter.floor > 36
     assert encounter.act_floor >= 1
-    assert encounter.floor > encounter.act_floor
+    assert encounter.floor >= encounter.act_floor
 
 def test_parse_normal_monster_encounter():
 

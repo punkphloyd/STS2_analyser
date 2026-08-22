@@ -3,7 +3,10 @@ from datetime import datetime
 
 from analysis.combat_analysis import (
     calculate_elite_boss_statistics,
+    calculate_encounter_statistics,
+    filter_encounters,
 )
+
 from data_models.encounter_data import EncounterData
 from data_models.run_data import RunData
 from data_models.run_metadata import RunMetadata
@@ -40,6 +43,10 @@ def make_encounter(
     return EncounterData(
         encounter=encounter,
         encounter_type=encounter_type,
+        act=1,
+        floor=2,
+        act_floor=2,
+        turns_taken=5,
         damage_taken=10,
         current_hp=current_hp,
         max_hp=80,
@@ -84,17 +91,17 @@ def test_calculate_elite_boss_statistics():
 
     result = calculate_elite_boss_statistics(runs)
 
-    assert result["ENCOUNTER.ENTOMANCER_ELITE"].faced == 2
+    assert result["ENCOUNTER.ENTOMANCER_ELITE"].fights == 2
     assert result["ENCOUNTER.ENTOMANCER_ELITE"].wins == 2
     assert (
-        result["ENCOUNTER.ENTOMANCER_ELITE"].success_rate
+        result["ENCOUNTER.ENTOMANCER_ELITE"].win_rate
         == 1.0
     )
 
-    assert result["ENCOUNTER.SENTRY_ELITE"].faced == 2
+    assert result["ENCOUNTER.SENTRY_ELITE"].fights == 2
     assert result["ENCOUNTER.SENTRY_ELITE"].wins == 1
     assert (
-        result["ENCOUNTER.SENTRY_ELITE"].success_rate
+        result["ENCOUNTER.SENTRY_ELITE"].win_rate
         == 0.5
     )
     assert (
@@ -129,7 +136,7 @@ def test_statistics_count_encounters_not_runs():
 
     result = calculate_elite_boss_statistics(runs)
 
-    assert result["ENCOUNTER.ENTOMANCER_ELITE"].faced == 2
+    assert result["ENCOUNTER.ENTOMANCER_ELITE"].fights == 2
     assert result["ENCOUNTER.ENTOMANCER_ELITE"].wins == 2
 
 
@@ -155,7 +162,7 @@ def test_statistics_include_bosses():
     result = calculate_elite_boss_statistics(runs)
 
     assert (
-        result["ENCOUNTER.WATERFALL_GIANT_BOSS"].faced
+        result["ENCOUNTER.WATERFALL_GIANT_BOSS"].fights
         == 2
     )
     assert (
@@ -163,7 +170,7 @@ def test_statistics_include_bosses():
         == 1
     )
     assert (
-        result["ENCOUNTER.WATERFALL_GIANT_BOSS"].success_rate
+        result["ENCOUNTER.WATERFALL_GIANT_BOSS"].win_rate
         == 0.5
     )
     assert (
@@ -175,5 +182,191 @@ def test_statistics_include_bosses():
 def test_statistics_empty_runs():
 
     result = calculate_elite_boss_statistics([])
+
+    assert result == {}
+
+
+def test_filter_encounters_by_act():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    runs[0].encounters[0].act = 2
+
+    assert len(
+        filter_encounters(
+            runs,
+            act=2,
+        )
+    ) == 1
+
+    assert (
+        len(
+            filter_encounters(
+                runs,
+                act=1,
+            )
+        )
+        == 0
+    )
+
+def test_filter_encounters_by_type():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.SLUDGE_SPINNER_WEAK",
+                    "monster",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    result = filter_encounters(
+        runs,
+        encounter_type="elite",
+    )
+
+    assert len(result) == 1
+    assert (
+        result[0].encounter
+        == "ENCOUNTER.ENTOMANCER_ELITE"
+    )
+
+
+def test_filter_encounters_by_act_and_type():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.SENTRY_ELITE",
+                    "elite",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    runs[0].encounters[0].act = 1
+    runs[0].encounters[1].act = 2
+
+    result = filter_encounters(
+        runs,
+        act=2,
+        encounter_type="elite",
+    )
+
+    assert len(result) == 1
+    assert (
+        result[0].encounter
+        == "ENCOUNTER.SENTRY_ELITE"
+    )
+
+def test_calculate_encounter_statistics():
+
+    runs = [
+        make_run(
+            [
+                EncounterData(
+                    encounter="ENCOUNTER.ENTOMANCER_ELITE",
+                    encounter_type="elite",
+                    act=1,
+                    floor=10,
+                    act_floor=10,
+                    turns_taken=5,
+                    damage_taken=20,
+                    current_hp=60,
+                    max_hp=80,
+                    hp_healed=0,
+                    max_hp_gained=0,
+                    max_hp_lost=0,
+                ),
+                EncounterData(
+                    encounter="ENCOUNTER.ENTOMANCER_ELITE",
+                    encounter_type="elite",
+                    act=1,
+                    floor=15,
+                    act_floor=15,
+                    turns_taken=10,
+                    damage_taken=40,
+                    current_hp=40,
+                    max_hp=80,
+                    hp_healed=0,
+                    max_hp_gained=0,
+                    max_hp_lost=0,
+                ),
+                EncounterData(
+                    encounter="ENCOUNTER.ENTOMANCER_ELITE",
+                    encounter_type="elite",
+                    act=1,
+                    floor=17,
+                    act_floor=17,
+                    turns_taken=4,
+                    damage_taken=10,
+                    current_hp=0,
+                    max_hp=80,
+                    hp_healed=0,
+                    max_hp_gained=0,
+                    max_hp_lost=0,
+                ),
+            ]
+        ),
+    ]
+
+    result = calculate_encounter_statistics(
+        runs
+    )
+
+    statistics = result[
+        "ENCOUNTER.ENTOMANCER_ELITE"
+    ]
+
+    assert statistics.encounter_type == "elite"
+    assert statistics.fights == 3
+    assert statistics.wins == 2
+    assert statistics.win_rate == 2 / 3
+
+    assert statistics.average_damage == 70 / 3
+    assert statistics.median_damage == 20
+    assert statistics.minimum_damage == 10
+    assert statistics.maximum_damage == 40
+
+    assert statistics.average_turns == 19 / 3
+    assert statistics.minimum_turns == 4
+    assert statistics.maximum_turns == 10
+
+    assert statistics.average_damage_per_turn == (
+        (
+            20 / 5
+            + 40 / 10
+            + 10 / 4
+        ) / 3
+    )
+
+def test_calculate_encounter_statistics_empty_runs():
+
+    result = calculate_encounter_statistics([])
 
     assert result == {}

@@ -1,5 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
+from statistics import median
 
 from data_models.run_data import RunData
 
@@ -7,51 +8,125 @@ from data_models.run_data import RunData
 @dataclass(slots=True)
 class EncounterStatistics:
     encounter_type: str
-    faced: int
+    fights: int
     wins: int
-    success_rate: float
-
+    win_rate: float
+    average_damage: float
+    median_damage: float
+    minimum_damage: int
+    maximum_damage: int
+    average_turns: float
+    minimum_turns: int
+    maximum_turns: int
+    average_damage_per_turn: float
 
 def calculate_elite_boss_statistics(
     runs: list[RunData],
 ) -> dict[str, EncounterStatistics]:
     """Calculate success statistics for elite and boss encounters."""
 
-    encounter_counts: dict[
-        str,
-        list[bool],
-    ] = defaultdict(list)
+    return {
+        encounter: statistics
+        for encounter, statistics
+        in calculate_encounter_statistics(runs).items()
+        if statistics.encounter_type in {
+            "elite",
+            "boss",
+        }
+    }
 
-    encounter_types: dict[
-        str,
-        str,
-    ] = {}
+
+def filter_encounters(
+    runs: list[RunData],
+    act: int | None = None,
+    encounter_type: str | None = None,
+):
+    """Return encounters matching the requested combat filters."""
+
+    encounters = []
 
     for run in runs:
         for encounter in run.encounters:
 
-            encounter_counts[
-                encounter.encounter
-            ].append(
-                encounter.current_hp > 0
-            )
+            if act is not None and encounter.act != act:
+                continue
 
-            encounter_types[
-                encounter.encounter
-            ] = encounter.encounter_type
+            if (
+                encounter_type is not None
+                and encounter.encounter_type != encounter_type
+            ):
+                continue
+
+            encounters.append(encounter)
+
+    return encounters
+
+
+def calculate_encounter_statistics(
+    runs: list[RunData],
+    act: int | None = None,
+    encounter_type: str | None = None,
+) -> dict[str, EncounterStatistics]:
+    """Calculate combat statistics for filtered encounters."""
+
+    encounters = filter_encounters(
+        runs,
+        act=act,
+        encounter_type=encounter_type,
+    )
+
+    grouped: dict[str, list] = defaultdict(list)
+
+    for encounter in encounters:
+        grouped[encounter.encounter].append(
+            encounter
+        )
 
     statistics = {}
 
-    for encounter, results in encounter_counts.items():
+    for encounter_name, encounter_list in grouped.items():
 
-        faced = len(results)
-        wins = sum(results)
+        fights = len(encounter_list)
 
-        statistics[encounter] = EncounterStatistics(
-            encounter_type=encounter_types[encounter],
-            faced=faced,
+        wins = sum(
+            encounter.current_hp > 0
+            for encounter in encounter_list
+        )
+
+        damages = [
+            encounter.damage_taken
+            for encounter in encounter_list
+        ]
+
+        turns = [
+            encounter.turns_taken
+            for encounter in encounter_list
+        ]
+
+        damage_per_turn = [
+            encounter.damage_taken / encounter.turns_taken
+            for encounter in encounter_list
+            if encounter.turns_taken > 0
+        ]
+
+        statistics[encounter_name] = EncounterStatistics(
+            encounter_type=encounter_list[0].encounter_type,
+            fights=fights,
             wins=wins,
-            success_rate=wins / faced,
+            win_rate=wins / fights,
+            average_damage=sum(damages) / fights,
+            median_damage=median(damages),
+            minimum_damage=min(damages),
+            maximum_damage=max(damages),
+            average_turns=sum(turns) / fights,
+            minimum_turns=min(turns),
+            maximum_turns=max(turns),
+            average_damage_per_turn=(
+                sum(damage_per_turn)
+                / len(damage_per_turn)
+                if damage_per_turn
+                else 0
+            ),
         )
 
     return statistics

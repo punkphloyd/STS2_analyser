@@ -73,37 +73,25 @@ class AnalysisTable(ctk.CTkFrame):
 
     def build_header(self, weights):
 
-        header_frame = ctk.CTkFrame(
-            self,
-            fg_color="transparent",
-        )
-
-        header_frame.grid(
-            row=0,
-            column=0,
-            columnspan=len(self.columns),
-            sticky="ew",
-        )
-
         for column, heading in enumerate(
             self.columns
         ):
 
-            anchor = (
-                "w"
-                if column == 0
-                else "e"
-            )
-
             label = ctk.CTkLabel(
-                header_frame,
+                self,
                 text=heading,
                 font=ctk.CTkFont(
                     size=13,
                     weight="bold",
                 ),
-                anchor=anchor,
+                anchor=(
+                    "w"
+                    if column == 0
+                    else "e"
+                ),
                 text_color="#202020",
+                fg_color="#D9E2EC",
+                corner_radius=0,
             )
 
             label.grid(
@@ -112,11 +100,6 @@ class AnalysisTable(ctk.CTkFrame):
                 sticky="ew",
                 padx=10,
                 pady=8,
-            )
-
-            header_frame.grid_columnconfigure(
-                column,
-                weight=weights[column],
             )
 
     def build_row(
@@ -132,19 +115,6 @@ class AnalysisTable(ctk.CTkFrame):
             else "#F5F5F5"
         )
 
-        row_frame = ctk.CTkFrame(
-            self,
-            fg_color=background,
-            corner_radius=0,
-        )
-
-        row_frame.grid(
-            row=row_index,
-            column=0,
-            columnspan=len(self.columns),
-            sticky="ew",
-        )
-
         for column, value in enumerate(row):
 
             text = self.format_value(
@@ -152,30 +122,25 @@ class AnalysisTable(ctk.CTkFrame):
                 value,
             )
 
-            anchor = (
-                "w"
-                if column == 0
-                else "e"
-            )
-
             label = ctk.CTkLabel(
-                row_frame,
+                self,
                 text=text,
-                anchor=anchor,
+                anchor=(
+                    "w"
+                    if column == 0
+                    else "e"
+                ),
                 text_color="#202020",
+                fg_color=background,
+                corner_radius=0,
             )
 
             label.grid(
-                row=0,
+                row=row_index,
                 column=column,
                 sticky="ew",
                 padx=10,
                 pady=6,
-            )
-
-            row_frame.grid_columnconfigure(
-                column,
-                weight=weights[column],
             )
 
     def format_value(

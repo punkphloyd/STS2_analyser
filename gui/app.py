@@ -12,14 +12,17 @@ from services.run_loader import (
     load_run_data,
     load_run_metadata,
 )
+
 from gui.directory_frame import DirectoryFrame
 from gui.quick_plots_frame import QuickPlotsFrame
 from gui.plot_window import PlotWindow
 from gui.analysis_window import AnalysisWindow
 from gui.death_analysis_window import DeathAnalysisWindow
+from gui.combat_analysis_window import CombatAnalysisWindow
 
 
 class App(ctk.CTk):
+
     def __init__(self):
         super().__init__()
 
@@ -42,6 +45,7 @@ class App(ctk.CTk):
         self.plot_window = None
         self.analysis_window = None
         self.death_analysis_window = None
+        self.combat_analysis_window = None
 
         # Frames definition
         self.results_frame = None
@@ -97,6 +101,7 @@ class App(ctk.CTk):
             text="Load Runs",
             command=self.load_runs
         )
+
         load_button.grid(
             row=2,
             column=0,
@@ -111,16 +116,16 @@ class App(ctk.CTk):
 
         self.filter_frame = FilterFrame(
             self,
-                on_character_changed=self.on_character_filter_changed,
-                on_result_changed=self.on_result_filter_changed,
-                on_min_ascension_changed=self.on_min_ascension_changed,
-                on_max_ascension_changed=self.on_max_ascension_changed,
-                on_date_changed=self.on_date_filter_changed,
-                on_clear_filters=self.clear_filters,
-                on_custom_dates_applied=self.on_custom_dates_applied,
-                on_exclude_daily_changed=self.on_exclude_daily_changed,
-                on_exclude_custom_changed=self.on_exclude_custom_changed,
-                on_game_version_changed=self.on_game_version_changed,
+            on_character_changed=self.on_character_filter_changed,
+            on_result_changed=self.on_result_filter_changed,
+            on_min_ascension_changed=self.on_min_ascension_changed,
+            on_max_ascension_changed=self.on_max_ascension_changed,
+            on_date_changed=self.on_date_filter_changed,
+            on_clear_filters=self.clear_filters,
+            on_custom_dates_applied=self.on_custom_dates_applied,
+            on_exclude_daily_changed=self.on_exclude_daily_changed,
+            on_exclude_custom_changed=self.on_exclude_custom_changed,
+            on_game_version_changed=self.on_game_version_changed,
         )
 
         self.filter_frame.grid(
@@ -180,6 +185,7 @@ class App(ctk.CTk):
         # ------------------------------------------------------------
         # 7. Quick plots frame
         # ------------------------------------------------------------
+
         self.quick_plots_frame = QuickPlotsFrame(
             self,
             on_plot=self.on_quick_plot
@@ -192,39 +198,75 @@ class App(ctk.CTk):
             pady=(10, 5),
             sticky="ew"
         )
+
         # ============================================================
         # 8. Analysis
         # ============================================================
 
-        neow_analysis_button = ctk.CTkButton(
+        analysis_frame = ctk.CTkFrame(
             self,
+            fg_color="transparent"
+        )
+
+        analysis_frame.grid(
+            row=7,
+            column=0,
+            padx=20,
+            pady=(5, 10),
+            sticky="ew"
+        )
+
+        analysis_frame.grid_columnconfigure(
+            0,
+            weight=1
+        )
+        analysis_frame.grid_columnconfigure(
+            1,
+            weight=1
+        )
+        analysis_frame.grid_columnconfigure(
+            2,
+            weight=1
+        )
+
+        neow_analysis_button = ctk.CTkButton(
+            analysis_frame,
             text="Neow's Bonus Relic Analysis",
             command=self.open_neow_analysis
         )
 
         neow_analysis_button.grid(
-            row=7,
+            row=0,
             column=0,
-            padx=20,
-            pady=(5, 10),
-            sticky="w"
+            padx=(0, 5),
+            sticky="ew"
         )
 
         death_analysis_button = ctk.CTkButton(
-            self,
+            analysis_frame,
             text="Death Analysis",
             command=self.open_death_analysis
         )
 
         death_analysis_button.grid(
-            row=7,
+            row=0,
             column=1,
-            padx=20,
-            pady=(5,10),
-            sticky="w"
+            padx=5,
+            sticky="ew"
         )
 
+        combat_analysis_button = ctk.CTkButton(
+            analysis_frame,
+            text="Combat Analysis",
+            command=self.open_combat_analysis
+        )
 
+        combat_analysis_button.grid(
+            row=0,
+            column=2,
+            padx=(5, 0),
+            sticky="ew"
+        )
 
         # ============================================================
         # 9. Status
@@ -251,7 +293,9 @@ class App(ctk.CTk):
     def load_runs(self):
 
         if not self.directory.get():
-            self.status.set("Please select a run directory first.")
+            self.status.set(
+                "Please select a run directory first."
+            )
             return
 
         self.run_metadata = load_run_metadata(
@@ -263,10 +307,12 @@ class App(ctk.CTk):
             for run in self.run_metadata
         })
 
-        self.filter_frame.set_game_versions(versions)
+        self.filter_frame.set_game_versions(
+            versions
+        )
+
         self.current_filter = RunFilter()
         self.refresh_run_table()
-
 
     # Function to refresh run table when changing/updating filters
     def refresh_run_table(self):
@@ -276,12 +322,18 @@ class App(ctk.CTk):
             self.current_filter
         )
 
-        self.results_frame.set_runs(self.filtered_runs)
+        self.results_frame.set_runs(
+            self.filtered_runs
+        )
 
         if self.plot_window is not None:
-            self.plot_window.update_runs(self.filtered_runs)
+            self.plot_window.update_runs(
+                self.filtered_runs
+            )
 
-        self.update_analysis_windows(self.filtered_runs)
+        self.update_analysis_windows(
+            self.filtered_runs
+        )
 
         self.status.set(
             f"Found {len(self.filtered_runs)} runs."
@@ -289,23 +341,35 @@ class App(ctk.CTk):
 
     def on_run_selected(self, _event):
 
-        selected_run = self.results_frame.get_selected_run()
+        selected_run = (
+            self.results_frame.get_selected_run()
+        )
 
         if selected_run is None:
             return
 
-        self.details_frame.show_run(selected_run)
+        self.details_frame.show_run(
+            selected_run
+        )
 
-    def on_character_filter_changed(self, value: str):
+    def on_character_filter_changed(
+        self,
+        value: str
+    ):
 
         if value == "All":
             self.current_filter.characters = None
         else:
-            self.current_filter.characters = {value}
+            self.current_filter.characters = {
+                value
+            }
 
         self.refresh_run_table()
 
-    def on_result_filter_changed(self, value: str):
+    def on_result_filter_changed(
+        self,
+        value: str
+    ):
 
         if value == "All":
             self.current_filter.victory = None
@@ -318,19 +382,32 @@ class App(ctk.CTk):
 
         self.refresh_run_table()
 
-    def on_min_ascension_changed(self, value: str):
+    def on_min_ascension_changed(
+        self,
+        value: str
+    ):
 
-        self.current_filter.min_ascension = int(value)
+        self.current_filter.min_ascension = int(
+            value
+        )
 
         self.refresh_run_table()
 
-    def on_max_ascension_changed(self, value: str):
+    def on_max_ascension_changed(
+        self,
+        value: str
+    ):
 
-        self.current_filter.max_ascension = int(value)
+        self.current_filter.max_ascension = int(
+            value
+        )
 
         self.refresh_run_table()
 
-    def on_date_filter_changed(self, value: str):
+    def on_date_filter_changed(
+        self,
+        value: str
+    ):
 
         now = datetime.now().date()
 
@@ -338,17 +415,24 @@ class App(ctk.CTk):
         self.current_filter.end_date = None
 
         if value == "Last 7 days":
-            self.current_filter.start_date = now - timedelta(days=7)
+            self.current_filter.start_date = (
+                now - timedelta(days=7)
+            )
 
         elif value == "Last 30 days":
-            self.current_filter.start_date = now - timedelta(days=30)
+            self.current_filter.start_date = (
+                now - timedelta(days=30)
+            )
 
         elif value == "Last 90 days":
-            self.current_filter.start_date = now - timedelta(days=90)
+            self.current_filter.start_date = (
+                now - timedelta(days=90)
+            )
 
         elif value == "Last 365 days":
-            self.current_filter.start_date = now - timedelta(days=365)
-
+            self.current_filter.start_date = (
+                now - timedelta(days=365)
+            )
 
         elif value == "Custom...":
             self.filter_frame.show_custom_dates()
@@ -359,9 +443,9 @@ class App(ctk.CTk):
         self.refresh_run_table()
 
     def on_custom_dates_applied(
-            self,
-            start_date: date,
-            end_date: date
+        self,
+        start_date: date,
+        end_date: date
     ):
 
         if start_date > end_date:
@@ -377,7 +461,9 @@ class App(ctk.CTk):
 
     def on_quick_plot(self):
 
-        selected_plot = self.quick_plots_frame.plot_combo.get()
+        selected_plot = (
+            self.quick_plots_frame.plot_combo.get()
+        )
 
         if not self.filtered_runs:
             self.status.set(
@@ -402,7 +488,7 @@ class App(ctk.CTk):
                 plot_type="Win Rate Over Time"
             )
 
-    # Open neow relic analysis window
+    # Open Neow relic analysis window
     def open_neow_analysis(self):
 
         if not self.filtered_runs:
@@ -443,7 +529,10 @@ class App(ctk.CTk):
 
         self.refresh_run_table()
 
-    def on_game_version_changed(self, value: str):
+    def on_game_version_changed(
+        self,
+        value: str
+    ):
 
         if value == "All":
             self.current_filter.game_version = None
@@ -453,6 +542,7 @@ class App(ctk.CTk):
         self.refresh_run_table()
 
     def sort_game_versions(self, versions):
+
         return sorted(
             versions,
             key=lambda version: [
@@ -464,20 +554,38 @@ class App(ctk.CTk):
 
     def clear_filters(self):
 
-        self.filter_frame.character_combo.set("All")
-        self.filter_frame.result_combo.set("All")
-        self.filter_frame.min_ascension_combo.set("0")
-        self.filter_frame.max_ascension_combo.set("10")
-        self.filter_frame.date_combo.set("All")
+        self.filter_frame.character_combo.set(
+            "All"
+        )
+        self.filter_frame.result_combo.set(
+            "All"
+        )
+        self.filter_frame.min_ascension_combo.set(
+            "0"
+        )
+        self.filter_frame.max_ascension_combo.set(
+            "10"
+        )
+        self.filter_frame.date_combo.set(
+            "All"
+        )
 
         self.filter_frame.exclude_daily_checkbox.deselect()
         self.filter_frame.exclude_custom_checkbox.deselect()
 
-        self.filter_frame.from_date_entry.delete(0, "end")
-        self.filter_frame.to_date_entry.delete(0, "end")
+        self.filter_frame.from_date_entry.delete(
+            0,
+            "end"
+        )
+        self.filter_frame.to_date_entry.delete(
+            0,
+            "end"
+        )
 
         self.filter_frame.hide_custom_dates()
-        self.filter_frame.game_version_combo.set("All")
+        self.filter_frame.game_version_combo.set(
+            "All"
+        )
 
         self.current_filter = RunFilter()
 
@@ -507,22 +615,54 @@ class App(ctk.CTk):
             run_data,
         )
 
-    def update_analysis_window(
+    def open_combat_analysis(self):
+
+        if not self.filtered_runs:
+            self.status.set(
+                "No runs available for analysis."
+            )
+            return
+
+        run_data = load_run_data(
+            self.filtered_runs
+        )
+
+        if self.combat_analysis_window is not None:
+            try:
+                if self.combat_analysis_window.winfo_exists():
+                    self.combat_analysis_window.destroy()
+            except Exception:
+                pass
+
+        self.combat_analysis_window = CombatAnalysisWindow(
             self,
-            window,
-            runs,
+            run_data,
+        )
+
+    def update_analysis_window(
+        self,
+        window,
+        runs,
     ):
+
         if window is None:
             return
 
         if not window.winfo_exists():
             return
 
-        run_data = load_run_data(runs)
+        run_data = load_run_data(
+            runs
+        )
 
-        window.update_runs(run_data)
+        window.update_runs(
+            run_data
+        )
 
-    def update_analysis_windows(self, runs):
+    def update_analysis_windows(
+        self,
+        runs
+    ):
 
         self.update_analysis_window(
             self.analysis_window,
@@ -531,5 +671,10 @@ class App(ctk.CTk):
 
         self.update_analysis_window(
             self.death_analysis_window,
+            runs,
+        )
+
+        self.update_analysis_window(
+            self.combat_analysis_window,
             runs,
         )
