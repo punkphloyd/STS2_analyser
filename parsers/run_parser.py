@@ -125,21 +125,29 @@ def parse_floor_reached(data: dict) -> int:
 def parse_encounter_data(
     data: dict,
 ) -> list[EncounterData]:
-    """Extract elite and boss encounters from a run."""
+    """Extract combat encounters from a run."""
 
     encounters = []
 
-    for map_point_group in data.get(
-        "map_point_history",
-        [],
+    floor = 0
+
+    for act_index, map_point_group in enumerate(
+        data.get("map_point_history", [])
     ):
-        for map_point in map_point_group:
+        act = act_index + 1
+
+        for act_floor, map_point in enumerate(
+            map_point_group,
+            start=1,
+        ):
+            floor += 1
 
             map_point_type = map_point.get(
                 "map_point_type"
             )
 
             if map_point_type not in {
+                "monster",
                 "elite",
                 "boss",
             }:
@@ -176,6 +184,13 @@ def parse_encounter_data(
                     EncounterData(
                         encounter=encounter,
                         encounter_type=map_point_type,
+                        act=act,
+                        floor=floor,
+                        act_floor=act_floor,
+                        turns_taken=room.get(
+                            "turns_taken",
+                            0,
+                        ),
                         damage_taken=stats.get(
                             "damage_taken",
                             0,

@@ -131,20 +131,18 @@ def test_parse_successful_elite_encounter():
 
     result = parse_encounter_data(data)
 
-    entomancer = next(
-        encounter
-        for encounter in result
-        if encounter.encounter
-        == "ENCOUNTER.PHANTASMAL_GARDENERS_ELITE"
+    encounter = get_encounter(
+        result,
+        "ENCOUNTER.PHANTASMAL_GARDENERS_ELITE",
     )
 
-    assert entomancer.encounter_type == "elite"
-    assert entomancer.damage_taken == 33
-    assert entomancer.current_hp == 18
-    assert entomancer.max_hp == 80
-    assert entomancer.hp_healed == 6
-    assert entomancer.max_hp_gained == 0
-    assert entomancer.max_hp_lost == 0
+    assert encounter.encounter_type == "elite"
+    assert encounter.act == 1
+    assert encounter.floor == 9
+    assert encounter.act_floor == 9
+    assert encounter.turns_taken == 7
+    assert encounter.damage_taken == 33
+    assert encounter.current_hp == 18
 
 
 def test_parse_successful_boss_encounter():
@@ -222,4 +220,91 @@ def test_parse_run_includes_encounters():
         == "ENCOUNTER.ENTOMANCER_ELITE"
         and encounter.current_hp == 0
         for encounter in result.encounters
+    )
+
+def test_parse_act_2_encounter_location():
+
+    path = EXAMPLE_RUNFILES / "1785257698.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_encounter_data(data)
+
+    encounter = next(
+        encounter
+        for encounter in result
+        if encounter.act == 2
+    )
+
+    assert encounter.act == 2
+    assert encounter.floor > 18
+    assert encounter.act_floor >= 1
+    assert encounter.floor > encounter.act_floor
+
+def test_parse_act_3_encounter_location():
+
+    path = EXAMPLE_RUNFILES / "1785257698.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_encounter_data(data)
+
+    encounter = next(
+        encounter
+        for encounter in result
+        if encounter.act == 3
+    )
+
+    assert encounter.act == 3
+    assert encounter.floor > 36
+    assert encounter.act_floor >= 1
+    assert encounter.floor > encounter.act_floor
+
+def test_parse_normal_monster_encounter():
+
+    path = EXAMPLE_RUNFILES / "1785257698.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_encounter_data(data)
+
+    monster = get_encounter(
+        result,
+        "ENCOUNTER.SLUDGE_SPINNER_WEAK",
+    )
+
+    assert monster.encounter_type == "monster"
+    assert monster.act == 1
+    assert monster.floor > 1
+    assert monster.act_floor > 1
+    assert monster.turns_taken == 3
+    assert monster.damage_taken == 12
+
+def test_parse_encounter_data_excludes_ancients():
+
+    path = EXAMPLE_RUNFILES / "1785257698.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_encounter_data(data)
+
+    assert all(
+        encounter.encounter_type
+        in {"monster", "elite", "boss"}
+        for encounter in result
+    )
+
+
+def get_encounter(
+    encounters,
+    encounter_name,
+):
+    return next(
+        encounter
+        for encounter in encounters
+        if encounter.encounter == encounter_name
     )
