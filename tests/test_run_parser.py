@@ -8,6 +8,7 @@ from parsers.run_parser import (
     parse_neow_relic_choices,
     parse_run,
 )
+from parsers.relic_parser import parse_relic_acquisitions
 
 
 EXAMPLE_RUNFILES = Path("example_runfiles")
@@ -43,6 +44,7 @@ def test_parse_multiplayer_run():
 
     assert result.metadata.multiplayer is True
 
+
 def test_parse_neow_relic_choices():
 
     path = EXAMPLE_RUNFILES / "1785257698.run"
@@ -72,6 +74,7 @@ def test_parse_death_data():
     )
     assert result.killed_by_event == "NONE.NONE"
 
+
 def test_parse_death_data_for_victory():
 
     path = EXAMPLE_RUNFILES / "1785229299.run"
@@ -82,6 +85,7 @@ def test_parse_death_data_for_victory():
     result = parse_death_data(data)
 
     assert result is None
+
 
 def test_parse_run_includes_death_data():
 
@@ -103,6 +107,7 @@ def test_parse_run_has_no_death_data_for_victory():
 
     assert result.death_data is None
 
+
 def test_parse_run_includes_floor_reached_for_victory():
 
     path = EXAMPLE_RUNFILES / "1785229299.run"
@@ -110,6 +115,7 @@ def test_parse_run_includes_floor_reached_for_victory():
     result = parse_run(path)
 
     assert result.floor_reached > 0
+
 
 def test_parse_floor_reached():
 
@@ -121,6 +127,7 @@ def test_parse_floor_reached():
     result = parse_floor_reached(data)
 
     assert result == 31
+
 
 def test_parse_successful_elite_encounter():
 
@@ -222,6 +229,7 @@ def test_parse_run_includes_encounters():
         for encounter in result.encounters
     )
 
+
 def test_parse_act_2_encounter_location():
 
     path = EXAMPLE_RUNFILES / "1785257698.run"
@@ -242,6 +250,7 @@ def test_parse_act_2_encounter_location():
     assert encounter.act_floor >= 1
     assert encounter.floor > encounter.act_floor
 
+
 def test_parse_act_3_encounter_location():
 
     path = EXAMPLE_RUNFILES / "1780311404.run"
@@ -260,6 +269,7 @@ def test_parse_act_3_encounter_location():
     assert encounter.act == 3
     assert encounter.act_floor >= 1
     assert encounter.floor >= encounter.act_floor
+
 
 def test_parse_normal_monster_encounter():
 
@@ -282,6 +292,7 @@ def test_parse_normal_monster_encounter():
     assert monster.turns_taken == 3
     assert monster.damage_taken == 12
 
+
 def test_parse_encounter_data_excludes_ancients():
 
     path = EXAMPLE_RUNFILES / "1785257698.run"
@@ -296,6 +307,210 @@ def test_parse_encounter_data_excludes_ancients():
         in {"monster", "elite", "boss"}
         for encounter in result
     )
+
+
+def test_parse_elite_relic_acquisition():
+
+    path = EXAMPLE_RUNFILES / "1780311404.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_relic_acquisitions(data)
+
+    acquisitions = [
+        acquisition
+        for acquisition in result
+        if acquisition.source == "elite"
+    ]
+
+    assert acquisitions
+
+    assert any(
+        acquisition.relic == "RELIC.STONE_CRACKER"
+        for acquisition in acquisitions
+    )
+
+
+def test_parse_treasure_relic_acquisition():
+
+    path = EXAMPLE_RUNFILES / "1785257698.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_relic_acquisitions(data)
+
+    acquisitions = [
+        acquisition
+        for acquisition in result
+        if acquisition.source == "treasure"
+    ]
+
+    assert acquisitions
+
+    assert any(
+        acquisition.relic == "RELIC.WHETSTONE"
+        for acquisition in acquisitions
+    )
+
+
+def test_parse_event_relic_acquisition():
+
+    path = EXAMPLE_RUNFILES / "1780311404.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_relic_acquisitions(data)
+
+    acquisitions = [
+        acquisition
+        for acquisition in result
+        if acquisition.source == "event"
+    ]
+
+    assert acquisitions
+
+    assert any(
+        acquisition.relic == "RELIC.EMBER_TEA"
+        for acquisition in acquisitions
+    )
+
+
+def test_parse_shop_relic_acquisition():
+
+    path = EXAMPLE_RUNFILES / "1780311404.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_relic_acquisitions(data)
+
+    acquisitions = [
+        acquisition
+        for acquisition in result
+        if acquisition.source == "shop"
+    ]
+
+    assert acquisitions
+
+    assert any(
+        acquisition.relic == "RELIC.WHITE_STAR"
+        for acquisition in acquisitions
+    )
+
+    assert not any(
+        acquisition.relic == "RELIC.PERMAFROST"
+        for acquisition in acquisitions
+    )
+
+    assert not any(
+        acquisition.relic == "RELIC.DOLLYS_MIRROR"
+        for acquisition in acquisitions
+    )
+
+
+def test_parse_ancient_relic_acquisition():
+
+    path = EXAMPLE_RUNFILES / "1780311404.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_relic_acquisitions(data)
+
+    acquisitions = [
+        acquisition
+        for acquisition in result
+        if acquisition.source == "ancient"
+    ]
+
+    assert acquisitions
+
+    assert any(
+        acquisition.relic == "RELIC.TOUCH_OF_OROBAS"
+        for acquisition in acquisitions
+    )
+
+    assert any(
+        acquisition.relic == "RELIC.RING_OF_THE_DRAKE"
+        for acquisition in acquisitions
+    )
+
+    assert not any(
+        acquisition.relic == "RELIC.RING_OF_THE_SNAKE"
+        for acquisition in acquisitions
+    )
+
+
+def test_parse_neow_relic_acquisition():
+
+    path = EXAMPLE_RUNFILES / "1780311404.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_relic_acquisitions(data)
+
+    acquisitions = [
+        acquisition
+        for acquisition in result
+        if acquisition.source == "neow"
+    ]
+
+    assert acquisitions
+
+    assert any(
+        acquisition.relic == "RELIC.BOOMING_CONCH"
+        for acquisition in acquisitions
+    )
+
+
+def test_parse_rest_site_relic_acquisition():
+
+    path = EXAMPLE_RUNFILES / "1780311404.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_relic_acquisitions(data)
+
+    acquisitions = [
+        acquisition
+        for acquisition in result
+        if acquisition.source == "rest_site"
+    ]
+
+    assert acquisitions
+
+    assert any(
+        acquisition.relic == "RELIC.BOWLER_HAT"
+        for acquisition in acquisitions
+    )
+
+
+def test_relic_acquisition_contains_location():
+
+    path = EXAMPLE_RUNFILES / "1780311404.run"
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    result = parse_relic_acquisitions(data)
+
+    assert result
+
+    acquisition = next(
+        acquisition
+        for acquisition in result
+        if acquisition.relic == "RELIC.NUNCHAKU"
+    )
+
+    assert acquisition.source == "treasure"
+    assert acquisition.act >= 1
+    assert acquisition.floor >= 1
+    assert acquisition.act_floor >= 1
 
 
 def get_encounter(

@@ -87,12 +87,6 @@ def parse_death_data(data: dict) -> DeathData | None:
     if data["win"]:
         return None
 
-    map_point_history = data.get(
-        "map_point_history",
-        []
-    )
-
-
     return DeathData(
         killed_by_encounter=data.get(
             "killed_by_encounter"
@@ -102,16 +96,6 @@ def parse_death_data(data: dict) -> DeathData | None:
         ),
     )
 
-def parse_floor_reached(data: dict) -> int:
-    map_point_history = data.get(
-        "map_point_history",
-        []
-    )
-
-    return sum(
-        len(act)
-        for act in map_point_history
-    )
 
 def parse_floor_reached(data: dict) -> int:
     """Return the number of map points reached during the run."""

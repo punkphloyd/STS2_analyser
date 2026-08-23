@@ -9,7 +9,7 @@ from data_models.relic_data import RelicAcquisition
 class RunData:
     metadata: RunMetadata
     floor_reached: int
-    relic_acquisitions: list[RelicAcquisition]
+    relic_acquisitions: list[RelicAcquisition] = field(default_factory=list)
     neow_bonus_relic: str | None = None
     neow_relic_choices: list[str] = field(default_factory=list)
     death_data: DeathData | None = None

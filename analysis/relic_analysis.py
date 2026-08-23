@@ -12,6 +12,19 @@ class ChoiceStatistics:
     win_rate: float | None
 
 
+@dataclass(slots=True)
+class RelicStatistics:
+    runs_acquired: int
+    wins: int
+
+    @property
+    def win_rate(self) -> float | None:
+        if self.runs_acquired == 0:
+            return None
+
+        return self.wins / self.runs_acquired
+
+
 def calculate_neow_relic_statistics(
     runs: list[RunData],
 ) -> dict[str, ChoiceStatistics]:
@@ -62,6 +75,49 @@ def calculate_neow_relic_statistics(
                 if picks > 0
                 else None
             ),
+        )
+
+    return result
+
+
+def calculate_relic_statistics(
+    runs: list[RunData],
+) -> dict[str, RelicStatistics]:
+    """Calculate acquisition and win statistics for relics."""
+
+    if not runs:
+        return {}
+
+    acquisition_counts: dict[str, int] = {}
+    win_counts: dict[str, int] = {}
+
+    for run in runs:
+
+        acquired_relics = {
+            acquisition.relic
+            for acquisition in run.relic_acquisitions
+        }
+
+        for relic in acquired_relics:
+
+            acquisition_counts[relic] = (
+                acquisition_counts.get(relic, 0) + 1
+            )
+
+            if run.metadata.victory:
+                win_counts[relic] = (
+                    win_counts.get(relic, 0) + 1
+                )
+
+    result: dict[str, RelicStatistics] = {}
+
+    for relic, runs_acquired in acquisition_counts.items():
+
+        wins = win_counts.get(relic, 0)
+
+        result[relic] = RelicStatistics(
+            runs_acquired=runs_acquired,
+            wins=wins,
         )
 
     return result
