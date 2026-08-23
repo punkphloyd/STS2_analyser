@@ -19,6 +19,7 @@ from gui.plot_window import PlotWindow
 from gui.analysis_window import AnalysisWindow
 from gui.death_analysis_window import DeathAnalysisWindow
 from gui.combat_analysis_window import CombatAnalysisWindow
+from gui.relic_analysis_window import RelicAnalysisWindow
 
 
 class App(ctk.CTk):
@@ -46,6 +47,7 @@ class App(ctk.CTk):
         self.analysis_window = None
         self.death_analysis_window = None
         self.combat_analysis_window = None
+        self.relic_analysis_window = None
 
         # Frames definition
         self.results_frame = None
@@ -67,6 +69,7 @@ class App(ctk.CTk):
             text="Slay the Spire 2 - Run Analyser",
             font=("Segoe UI", 22, "bold")
         )
+
         title.grid(
             row=0,
             column=0,
@@ -182,9 +185,9 @@ class App(ctk.CTk):
             sticky="nsew"
         )
 
-        # ------------------------------------------------------------
+        # ============================================================
         # 7. Quick plots frame
-        # ------------------------------------------------------------
+        # ============================================================
 
         self.quick_plots_frame = QuickPlotsFrame(
             self,
@@ -220,12 +223,19 @@ class App(ctk.CTk):
             0,
             weight=1
         )
+
         analysis_frame.grid_columnconfigure(
             1,
             weight=1
         )
+
         analysis_frame.grid_columnconfigure(
             2,
+            weight=1
+        )
+
+        analysis_frame.grid_columnconfigure(
+            3,
             weight=1
         )
 
@@ -264,6 +274,19 @@ class App(ctk.CTk):
         combat_analysis_button.grid(
             row=0,
             column=2,
+            padx=5,
+            sticky="ew"
+        )
+
+        relic_analysis_button = ctk.CTkButton(
+            analysis_frame,
+            text="Relic Analysis",
+            command=self.open_relic_analysis
+        )
+
+        relic_analysis_button.grid(
+            row=0,
+            column=3,
             padx=(5, 0),
             sticky="ew"
         )
@@ -557,15 +580,19 @@ class App(ctk.CTk):
         self.filter_frame.character_combo.set(
             "All"
         )
+
         self.filter_frame.result_combo.set(
             "All"
         )
+
         self.filter_frame.min_ascension_combo.set(
             "0"
         )
+
         self.filter_frame.max_ascension_combo.set(
             "10"
         )
+
         self.filter_frame.date_combo.set(
             "All"
         )
@@ -577,6 +604,7 @@ class App(ctk.CTk):
             0,
             "end"
         )
+
         self.filter_frame.to_date_entry.delete(
             0,
             "end"
@@ -639,6 +667,30 @@ class App(ctk.CTk):
             run_data,
         )
 
+    def open_relic_analysis(self):
+
+        if not self.filtered_runs:
+            self.status.set(
+                "No runs available for analysis."
+            )
+            return
+
+        run_data = load_run_data(
+            self.filtered_runs
+        )
+
+        if self.relic_analysis_window is not None:
+            try:
+                if self.relic_analysis_window.winfo_exists():
+                    self.relic_analysis_window.destroy()
+            except Exception:
+                pass
+
+        self.relic_analysis_window = RelicAnalysisWindow(
+            self,
+            run_data,
+        )
+
     def update_analysis_window(
         self,
         window,
@@ -676,5 +728,10 @@ class App(ctk.CTk):
 
         self.update_analysis_window(
             self.combat_analysis_window,
+            runs,
+        )
+
+        self.update_analysis_window(
+            self.relic_analysis_window,
             runs,
         )

@@ -441,18 +441,18 @@ class DeathAnalysisWindow(ctk.CTkToplevel):
         columns = [
             "Type",
             "Encounter",
-            "Faced",
+            "Fights",
             "Won",
-            "Success Rate",
+            "Win Rate",
         ]
 
         rows = [
             (
                 statistics[encounter].encounter_type.title(),
                 format_encounter_name(encounter),
-                statistics[encounter].faced,
+                statistics[encounter].fights,
                 statistics[encounter].wins,
-                statistics[encounter].success_rate,
+                statistics[encounter].win_rate,
             )
             for encounter in sorted(statistics)
         ]
