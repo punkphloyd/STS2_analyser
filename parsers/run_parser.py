@@ -5,6 +5,7 @@ from data_models.run_data import RunData
 from parsers.metadata_parser import parse_metadata
 from data_models.encounter_data import EncounterData
 from data_models.death_data import DeathData
+from parsers.relic_parser import parse_relic_acquisitions
 
 
 def parse_neow_relic_choices(
@@ -67,6 +68,8 @@ def parse_run(path: Path) -> RunData:
     floor_reached = parse_floor_reached(data)
     death_data = parse_death_data(data)
     encounters = parse_encounter_data(data)
+    relic_acquisitions = parse_relic_acquisitions(data)
+
 
     return RunData(
         metadata=metadata,
@@ -74,7 +77,8 @@ def parse_run(path: Path) -> RunData:
         neow_bonus_relic=neow_bonus_relic,
         neow_relic_choices=neow_relic_choices,
         death_data=death_data,
-        encounters=encounters
+        encounters=encounters,
+        relic_acquisitions=relic_acquisitions,
     )
 
 def parse_death_data(data: dict) -> DeathData | None:
