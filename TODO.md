@@ -40,15 +40,23 @@
 
 ### Run Analysis
 - [ ] Run outcome statistics
-- [ ] Floor reached analysis
-- [ ] Elite fight analysis
+- [x] Floor reached analysis
 - [ ] Death analysis
 
 ### Relic Analysis
-- [ ] Neow's bonus relic - pick rate
-- [ ] Neow's bonus relic - win rate
-- [ ] Relic pick analysis
-- [ ] Relic win-rate analysis
+- [x] Parse relic acquisitions
+- [x] Record relic acquisition source
+- [x] Record relic acquisition act / floor / act-floor
+- [x] Neow's bonus relic - pick rate
+- [x] Neow's bonus relic - win rate
+- [x] General relic acquisition statistics
+- [x] General relic analysis GUI
+- [ ] Relic acquisition analysis by source
+- [ ] Relic acquisition timing analysis
+- [ ] Relic encounter-performance analysis
+- [ ] Relic performance against specific elites
+- [ ] Relic performance against specific bosses
+- [ ] Relic performance by encounter type
 
 ### Card Analysis
 - [ ] Card reward analysis
@@ -57,6 +65,10 @@
 - [ ] Card skip rate
 - [ ] Card analysis by character
 - [ ] Card analysis by ascension
+- [ ] Card acquisition act / floor / act-floor tracking
+- [ ] Card encounter-performance analysis
+- [ ] Card performance against specific elites
+- [ ] Card performance against specific bosses
 - [ ] Advanced card analysis
 
 ### Event Analysis
@@ -65,13 +77,36 @@
 - [ ] Event option win rate
 - [ ] Event analysis by character
 - [ ] Event analysis by ascension
+- [ ] Complex event relic analysis
 
 ### Combat / Death Analysis
-- [ ] Most common cause of death
-- [ ] Deaths by enemy
+- [x] Encounter parsing
+- [x] Encounter location tracking
+- [x] Combat performance statistics
+- [x] Damage taken analysis
+- [x] Turns per fight analysis
+- [x] Elite encounter analysis
+- [x] Boss encounter analysis
+- [x] Most common cause of death
+- [x] Deaths by enemy
 - [ ] Deaths by enemy type
 - [ ] Death floor analysis
-- [ ] Elite encounter analysis
+- [ ] Encounter-level analysis framework
+- [ ] Encounter filtering by type
+- [ ] Encounter filtering by specific elite/boss
+- [ ] Separate encounter outcome from overall run outcome
+- [ ] Encounter performance analysis by item presence
+
+### Encounter Analysis
+- [ ] Reusable encounter-level statistics
+- [ ] Normal / elite / boss encounter filtering
+- [ ] Specific encounter filtering
+- [ ] Determine item presence at encounter from act / floor / act-floor
+- [ ] Encounter win/loss statistics
+- [ ] Encounter damage statistics
+- [ ] Encounter turn statistics
+- [ ] Encounter performance by relic
+- [ ] Encounter performance by card
 
 ### Path Analysis
 - [ ] Path choice analysis
@@ -94,9 +129,12 @@
 - [ ] Average floor reached
 - [ ] Deck size distribution
 - [ ] Card pick frequency
-- [ ] Relic pick frequency
+- [ ] Relic acquisition frequency
+- [ ] Relic acquisition timing
 - [ ] Boss relic choices
 - [ ] Event outcomes
+- [ ] Encounter win rates
+- [ ] Item performance against encounters
 
 ## Phase 7 - Polish
 - [ ] Remember last run directory
@@ -106,13 +144,17 @@
 - [ ] Settings
 - [ ] Performance improvements
 - [ ] Clean up remaining IDE/type warnings
+- [ ] Fix remaining analysis-window graphical issues
 - [ ] Improve plot presentation/UX
-
 
 ## Testing & Quality
 - [x] Statistics tests
 - [x] Filtering tests
 - [x] Plot tests
 - [x] Metadata parser tests
+- [x] Encounter parser tests
+- [x] Relic parser tests
+- [x] Relic analysis tests
+- [x] Combat analysis tests
 - [ ] GUI integration tests
 - [ ] Expand edge-case coverage
