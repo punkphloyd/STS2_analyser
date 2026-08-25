@@ -1,24 +1,16 @@
 from collections import defaultdict
-from dataclasses import dataclass
 from statistics import median
 
+from data_models.encounter_data import EncounterData
+from data_models.encounter_statistics import EncounterStatistics
 from data_models.run_data import RunData
 
 
-@dataclass(slots=True)
-class EncounterStatistics:
-    encounter_type: str
-    fights: int
-    wins: int
-    win_rate: float
-    average_damage: float
-    median_damage: float
-    minimum_damage: int
-    maximum_damage: int
-    average_turns: float
-    minimum_turns: int
-    maximum_turns: int
-    average_damage_per_turn: float
+def encounter_won(
+    encounter: EncounterData,
+) -> bool:
+    return encounter.current_hp > 0
+
 
 def calculate_elite_boss_statistics(
     runs: list[RunData],
@@ -40,6 +32,7 @@ def filter_encounters(
     runs: list[RunData],
     act: int | None = None,
     encounter_type: str | None = None,
+    encounter_name: str | None = None,
 ):
     """Return encounters matching the requested combat filters."""
 
@@ -57,6 +50,12 @@ def filter_encounters(
             ):
                 continue
 
+            if (
+                encounter_name is not None
+                and encounter.encounter != encounter_name
+            ):
+                continue
+
             encounters.append(encounter)
 
     return encounters
@@ -66,6 +65,7 @@ def calculate_encounter_statistics(
     runs: list[RunData],
     act: int | None = None,
     encounter_type: str | None = None,
+    encounter_name: str | None = None,
 ) -> dict[str, EncounterStatistics]:
     """Calculate combat statistics for filtered encounters."""
 
@@ -73,6 +73,7 @@ def calculate_encounter_statistics(
         runs,
         act=act,
         encounter_type=encounter_type,
+        encounter_name=encounter_name,
     )
 
     grouped: dict[str, list] = defaultdict(list)
@@ -89,7 +90,7 @@ def calculate_encounter_statistics(
         fights = len(encounter_list)
 
         wins = sum(
-            encounter.current_hp > 0
+            encounter_won(encounter)
             for encounter in encounter_list
         )
 
