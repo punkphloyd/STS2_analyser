@@ -60,6 +60,39 @@ def filter_encounters(
 
     return encounters
 
+def filter_run_encounters(
+    runs: list[RunData],
+    act: int | None = None,
+    encounter_type: str | None = None,
+    encounter_name: str | None = None,
+) -> list[tuple[RunData, EncounterData]]:
+    """Return matching encounters while retaining their parent runs."""
+
+    results = []
+
+    for run in runs:
+        for encounter in run.encounters:
+
+            if act is not None and encounter.act != act:
+                continue
+
+            if (
+                encounter_type is not None
+                and encounter.encounter_type != encounter_type
+            ):
+                continue
+
+            if (
+                encounter_name is not None
+                and encounter.encounter != encounter_name
+            ):
+                continue
+
+            results.append(
+                (run, encounter)
+            )
+
+    return results
 
 def calculate_encounter_statistics(
     runs: list[RunData],

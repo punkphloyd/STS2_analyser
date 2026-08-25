@@ -6,6 +6,7 @@ from analysis.combat_analysis import (
     calculate_encounter_statistics,
     encounter_won,
     filter_encounters,
+    filter_run_encounters,
 )
 
 from data_models.encounter_data import EncounterData
@@ -452,3 +453,72 @@ def test_encounter_won_when_player_dies():
     )
 
     assert encounter_won(encounter) is False
+
+def test_filter_run_encounters_retains_parent_run():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    result = filter_run_encounters(
+        runs,
+        encounter_name="ENCOUNTER.ENTOMANCER_ELITE",
+    )
+
+    assert len(result) == 1
+
+    run, encounter = result[0]
+
+    assert run is runs[0]
+    assert encounter.encounter == (
+        "ENCOUNTER.ENTOMANCER_ELITE"
+    )
+
+
+def test_filter_run_encounters_applies_all_filters():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.WATERFALL_GIANT_BOSS",
+                    "boss",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    runs[0].encounters[0].act = 1
+    runs[0].encounters[1].act = 2
+
+    result = filter_run_encounters(
+        runs,
+        act=2,
+        encounter_type="boss",
+        encounter_name="ENCOUNTER.WATERFALL_GIANT_BOSS",
+    )
+
+    assert len(result) == 1
+
+    run, encounter = result[0]
+
+    assert run is runs[0]
+    assert encounter.act == 2
+    assert encounter.encounter_type == "boss"
+    assert encounter.encounter == (
+        "ENCOUNTER.WATERFALL_GIANT_BOSS"
+    )

@@ -1,5 +1,14 @@
 from dataclasses import dataclass
+from statistics import median
 
+from analysis.combat_analysis import (
+    encounter_won,
+    filter_run_encounters,
+)
+from analysis.encounter_analysis import (
+    relic_present_at_encounter,
+)
+from data_models.encounter_statistics import EncounterStatistics
 from data_models.run_data import RunData
 
 
@@ -118,6 +127,94 @@ def calculate_relic_statistics(
         result[relic] = RelicStatistics(
             runs_acquired=runs_acquired,
             wins=wins,
+        )
+
+    return result
+
+
+def calculate_relic_encounter_statistics(
+    runs: list[RunData],
+    encounter_type: str | None = None,
+    encounter_name: str | None = None,
+    act: int | None = None,
+) -> dict[str, EncounterStatistics]:
+    """Calculate encounter statistics for relics present during fights."""
+
+    if not runs:
+        return {}
+
+    grouped: dict[str, list] = {}
+
+    run_encounters = filter_run_encounters(
+        runs,
+        act=act,
+        encounter_type=encounter_type,
+        encounter_name=encounter_name,
+    )
+
+    for run, encounter in run_encounters:
+
+        relics = {
+            acquisition.relic
+            for acquisition in run.relic_acquisitions
+            if relic_present_at_encounter(
+                acquisition.relic,
+                run,
+                encounter,
+            )
+        }
+
+        for relic in relics:
+            grouped.setdefault(
+                relic,
+                [],
+            ).append(encounter)
+
+    result: dict[str, EncounterStatistics] = {}
+
+    for relic, encounters in grouped.items():
+
+        fights = len(encounters)
+
+        wins = sum(
+            encounter_won(encounter)
+            for encounter in encounters
+        )
+
+        damages = [
+            encounter.damage_taken
+            for encounter in encounters
+        ]
+
+        turns = [
+            encounter.turns_taken
+            for encounter in encounters
+        ]
+
+        damage_per_turn = [
+            encounter.damage_taken / encounter.turns_taken
+            for encounter in encounters
+            if encounter.turns_taken > 0
+        ]
+
+        result[relic] = EncounterStatistics(
+            encounter_type=encounters[0].encounter_type,
+            fights=fights,
+            wins=wins,
+            win_rate=wins / fights,
+            average_damage=sum(damages) / fights,
+            median_damage=median(damages),
+            minimum_damage=min(damages),
+            maximum_damage=max(damages),
+            average_turns=sum(turns) / fights,
+            minimum_turns=min(turns),
+            maximum_turns=max(turns),
+            average_damage_per_turn=(
+                sum(damage_per_turn)
+                / len(damage_per_turn)
+                if damage_per_turn
+                else 0
+            ),
         )
 
     return result
