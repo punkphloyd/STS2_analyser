@@ -10,7 +10,7 @@ from analysis.encounter_analysis import (
 )
 from data_models.encounter_statistics import EncounterStatistics
 from data_models.run_data import RunData
-
+from data_models.encounter_filter import EncounterFilter
 
 @dataclass(slots=True)
 class ChoiceStatistics:
@@ -134,9 +134,7 @@ def calculate_relic_statistics(
 
 def calculate_relic_encounter_statistics(
     runs: list[RunData],
-    encounter_type: str | None = None,
-    encounter_name: str | None = None,
-    act: int | None = None,
+    encounter_filter: EncounterFilter | None = None,
 ) -> dict[str, EncounterStatistics]:
     """Calculate encounter statistics for relics present during fights."""
 
@@ -147,9 +145,7 @@ def calculate_relic_encounter_statistics(
 
     run_encounters = filter_run_encounters(
         runs,
-        act=act,
-        encounter_type=encounter_type,
-        encounter_name=encounter_name,
+        encounter_filter=encounter_filter,
     )
 
     for run, encounter in run_encounters:

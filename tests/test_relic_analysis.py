@@ -7,10 +7,14 @@ from analysis.relic_analysis import (
     calculate_relic_statistics,
 )
 from data_models.encounter_data import EncounterData
+from data_models.encounter_filter import EncounterFilter
 from data_models.relic_data import RelicAcquisition
 from data_models.run_data import RunData
 from data_models.run_metadata import RunMetadata
 from parsers.run_parser import parse_run
+
+
+EXAMPLE_RUNFILES = Path("example_runfiles")
 
 
 def make_run(
@@ -282,7 +286,9 @@ def test_relic_encounter_statistics_relic_acquired_before_encounter():
 
     result = calculate_relic_encounter_statistics(
         [run],
-        encounter_type="elite",
+        encounter_filter=EncounterFilter(
+            encounter_type="elite",
+        ),
     )
 
     statistics = result["RELIC.TEST"]
@@ -323,7 +329,9 @@ def test_relic_acquired_on_same_floor_is_not_present():
 
     result = calculate_relic_encounter_statistics(
         [run],
-        encounter_type="elite",
+        encounter_filter=EncounterFilter(
+            encounter_type="elite",
+        ),
     )
 
     assert "RELIC.TEST" not in result
@@ -352,7 +360,9 @@ def test_relic_acquired_after_encounter_is_not_present():
 
     result = calculate_relic_encounter_statistics(
         [run],
-        encounter_type="elite",
+        encounter_filter=EncounterFilter(
+            encounter_type="elite",
+        ),
     )
 
     assert "RELIC.TEST" not in result
@@ -396,7 +406,9 @@ def test_relic_contributes_to_multiple_subsequent_encounters():
 
     result = calculate_relic_encounter_statistics(
         [run],
-        encounter_type="elite",
+        encounter_filter=EncounterFilter(
+            encounter_type="elite",
+        ),
     )
 
     statistics = result["RELIC.TEST"]
@@ -438,7 +450,9 @@ def test_relic_encounter_statistics_respects_encounter_name_filter():
 
     result = calculate_relic_encounter_statistics(
         [run],
-        encounter_name="ENCOUNTER.SECOND_ELITE",
+        encounter_filter=EncounterFilter(
+            encounter_name="ENCOUNTER.SECOND_ELITE",
+        ),
     )
 
     statistics = result["RELIC.TEST"]
@@ -446,6 +460,7 @@ def test_relic_encounter_statistics_respects_encounter_name_filter():
     assert statistics.fights == 1
     assert statistics.wins == 0
     assert statistics.win_rate == 0.0
+
 
 def test_relic_encounter_statistics_respects_acquisition_timing():
 
@@ -455,7 +470,9 @@ def test_relic_encounter_statistics_respects_acquisition_timing():
 
     result = calculate_relic_encounter_statistics(
         [run],
-        encounter_type="elite",
+        encounter_filter=EncounterFilter(
+            encounter_type="elite",
+        ),
     )
 
     assert "RELIC.WHITE_BEAST_STATUE" in result
@@ -510,7 +527,9 @@ def test_relic_encounter_statistics_calculates_encounter_results():
 
     result = calculate_relic_encounter_statistics(
         [run],
-        encounter_name="ENCOUNTER.TEST_ELITE",
+        encounter_filter=EncounterFilter(
+            encounter_name="ENCOUNTER.TEST_ELITE",
+        ),
     )
 
     statistics = result["RELIC.TEST"]
@@ -529,3 +548,58 @@ def test_relic_encounter_statistics_calculates_encounter_results():
     assert statistics.maximum_turns == 10
 
     assert statistics.average_damage_per_turn == 2
+
+
+def test_relic_encounter_statistics_respects_encounter_filter():
+
+    relic = make_relic_acquisition(
+        "RELIC.TEST",
+        5,
+    )
+
+    encounters = [
+        make_encounter(
+            "ENCOUNTER.FIRST_ELITE",
+            "elite",
+            10,
+            current_hp=30,
+        ),
+        make_encounter(
+            "ENCOUNTER.SECOND_ELITE",
+            "elite",
+            15,
+            current_hp=0,
+        ),
+        make_encounter(
+            "ENCOUNTER.TEST_BOSS",
+            "boss",
+            20,
+            current_hp=40,
+        ),
+    ]
+
+    encounters[0].act = 1
+    encounters[1].act = 2
+    encounters[2].act = 2
+
+    run = make_run(
+        [],
+        None,
+        False,
+        relic_acquisitions=[relic],
+        encounters=encounters,
+    )
+
+    result = calculate_relic_encounter_statistics(
+        [run],
+        encounter_filter=EncounterFilter(
+            act=2,
+            encounter_type="elite",
+        ),
+    )
+
+    statistics = result["RELIC.TEST"]
+
+    assert statistics.fights == 1
+    assert statistics.wins == 0
+    assert statistics.win_rate == 0.0

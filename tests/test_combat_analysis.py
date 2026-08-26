@@ -1,5 +1,5 @@
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 from analysis.combat_analysis import (
     calculate_elite_boss_statistics,
@@ -8,9 +8,12 @@ from analysis.combat_analysis import (
     filter_encounters,
     filter_run_encounters,
     filter_runs_by_encounter,
+    get_available_acts,
+    get_available_encounter_types,
+    get_available_encounters,
 )
-
 from data_models.encounter_data import EncounterData
+from data_models.encounter_filter import EncounterFilter
 from data_models.run_data import RunData
 from data_models.run_metadata import RunMetadata
 
@@ -209,19 +212,23 @@ def test_filter_encounters_by_act():
 
     runs[0].encounters[0].act = 2
 
-    assert len(
-        filter_encounters(
-            runs,
+    result = filter_encounters(
+        runs,
+        encounter_filter=EncounterFilter(
             act=2,
-        )
-    ) == 1
+        ),
+    )
 
-    assert len(
-        filter_encounters(
-            runs,
+    assert len(result) == 1
+
+    result = filter_encounters(
+        runs,
+        encounter_filter=EncounterFilter(
             act=1,
-        )
-    ) == 0
+        ),
+    )
+
+    assert len(result) == 0
 
 
 def test_filter_encounters_by_type():
@@ -245,7 +252,9 @@ def test_filter_encounters_by_type():
 
     result = filter_encounters(
         runs,
-        encounter_type="elite",
+        encounter_filter=EncounterFilter(
+            encounter_type="elite",
+        ),
     )
 
     assert len(result) == 1
@@ -275,7 +284,9 @@ def test_filter_encounters_by_specific_encounter():
 
     result = filter_encounters(
         runs,
-        encounter_name="ENCOUNTER.SENTRY_ELITE",
+        encounter_filter=EncounterFilter(
+            encounter_name="ENCOUNTER.SENTRY_ELITE",
+        ),
     )
 
     assert len(result) == 1
@@ -314,9 +325,11 @@ def test_filter_encounters_combines_filters():
 
     result = filter_encounters(
         runs,
-        act=2,
-        encounter_type="elite",
-        encounter_name="ENCOUNTER.SENTRY_ELITE",
+        encounter_filter=EncounterFilter(
+            act=2,
+            encounter_type="elite",
+            encounter_name="ENCOUNTER.SENTRY_ELITE",
+        ),
     )
 
     assert len(result) == 1
@@ -409,6 +422,45 @@ def test_calculate_encounter_statistics():
     )
 
 
+def test_calculate_encounter_statistics_with_filter():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.SENTRY_ELITE",
+                    "elite",
+                    0,
+                ),
+            ]
+        ),
+    ]
+
+    runs[0].encounters[0].act = 2
+    runs[0].encounters[1].act = 1
+
+    result = calculate_encounter_statistics(
+        runs,
+        encounter_filter=EncounterFilter(
+            act=2,
+            encounter_type="elite",
+        ),
+    )
+
+    assert list(result) == [
+        "ENCOUNTER.ENTOMANCER_ELITE"
+    ]
+
+    assert result[
+        "ENCOUNTER.ENTOMANCER_ELITE"
+    ].fights == 1
+
+
 def test_calculate_encounter_statistics_empty_runs():
 
     result = calculate_encounter_statistics([])
@@ -455,6 +507,7 @@ def test_encounter_won_when_player_dies():
 
     assert encounter_won(encounter) is False
 
+
 def test_filter_run_encounters_retains_parent_run():
 
     runs = [
@@ -471,7 +524,9 @@ def test_filter_run_encounters_retains_parent_run():
 
     result = filter_run_encounters(
         runs,
-        encounter_name="ENCOUNTER.ENTOMANCER_ELITE",
+        encounter_filter=EncounterFilter(
+            encounter_name="ENCOUNTER.ENTOMANCER_ELITE",
+        ),
     )
 
     assert len(result) == 1
@@ -508,9 +563,11 @@ def test_filter_run_encounters_applies_all_filters():
 
     result = filter_run_encounters(
         runs,
-        act=2,
-        encounter_type="boss",
-        encounter_name="ENCOUNTER.WATERFALL_GIANT_BOSS",
+        encounter_filter=EncounterFilter(
+            act=2,
+            encounter_type="boss",
+            encounter_name="ENCOUNTER.WATERFALL_GIANT_BOSS",
+        ),
     )
 
     assert len(result) == 1
@@ -523,6 +580,7 @@ def test_filter_run_encounters_applies_all_filters():
     assert encounter.encounter == (
         "ENCOUNTER.WATERFALL_GIANT_BOSS"
     )
+
 
 def test_filter_runs_by_encounter():
 
@@ -549,7 +607,9 @@ def test_filter_runs_by_encounter():
 
     result = filter_runs_by_encounter(
         runs,
-        encounter_name="ENCOUNTER.ENTOMANCER_ELITE",
+        encounter_filter=EncounterFilter(
+            encounter_name="ENCOUNTER.ENTOMANCER_ELITE",
+        ),
     )
 
     assert len(result) == 1
@@ -577,7 +637,9 @@ def test_filter_runs_by_encounter_returns_each_run_once():
 
     result = filter_runs_by_encounter(
         runs,
-        encounter_name="ENCOUNTER.ENTOMANCER_ELITE",
+        encounter_filter=EncounterFilter(
+            encounter_name="ENCOUNTER.ENTOMANCER_ELITE",
+        ),
     )
 
     assert len(result) == 1
@@ -617,9 +679,11 @@ def test_filter_runs_by_encounter_combines_filters():
 
     result = filter_runs_by_encounter(
         runs,
-        act=2,
-        encounter_type="elite",
-        encounter_name="ENCOUNTER.ENTOMANCER_ELITE",
+        encounter_filter=EncounterFilter(
+            act=2,
+            encounter_type="elite",
+            encounter_name="ENCOUNTER.ENTOMANCER_ELITE",
+        ),
     )
 
     assert len(result) == 1
@@ -642,7 +706,241 @@ def test_filter_runs_by_encounter_returns_empty_when_no_match():
 
     result = filter_runs_by_encounter(
         runs,
-        encounter_name="ENCOUNTER.SENTRY_ELITE",
+        encounter_filter=EncounterFilter(
+            encounter_name="ENCOUNTER.SENTRY_ELITE",
+        ),
     )
 
     assert result == []
+
+
+def test_get_available_acts():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.SENTRY_ELITE",
+                    "elite",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    runs[0].encounters[0].act = 1
+    runs[0].encounters[1].act = 3
+
+    assert get_available_acts(runs) == [1, 3]
+
+
+def test_get_available_acts_are_sorted_and_unique():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.SENTRY_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.TEST_BOSS",
+                    "boss",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    runs[0].encounters[0].act = 3
+    runs[0].encounters[1].act = 1
+    runs[0].encounters[2].act = 3
+
+    assert get_available_acts(runs) == [1, 3]
+
+
+def test_get_available_encounter_types_respects_act():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ACT_1_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.ACT_1_BOSS",
+                    "boss",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.ACT_2_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.ACT_2_BOSS",
+                    "boss",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    runs[0].encounters[0].act = 1
+    runs[0].encounters[1].act = 1
+    runs[0].encounters[2].act = 2
+    runs[0].encounters[3].act = 2
+
+    assert get_available_encounter_types(
+        runs,
+        EncounterFilter(act=1),
+    ) == ["boss", "elite"]
+
+    assert get_available_encounter_types(
+        runs,
+        EncounterFilter(act=2),
+    ) == ["boss", "elite"]
+
+
+def test_get_available_encounter_types_without_act():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.TEST_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.TEST_BOSS",
+                    "boss",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.TEST_MONSTER",
+                    "monster",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    assert get_available_encounter_types(runs) == [
+        "boss",
+        "elite",
+        "monster",
+    ]
+
+
+def test_get_available_encounters_respects_act_and_type():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ACT_1_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.ACT_1_BOSS",
+                    "boss",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.ACT_2_BOSS",
+                    "boss",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    runs[0].encounters[0].act = 1
+    runs[0].encounters[1].act = 1
+    runs[0].encounters[2].act = 2
+    runs[0].encounters[3].act = 2
+
+    assert get_available_encounters(
+        runs,
+        EncounterFilter(
+            act=2,
+            encounter_type="elite",
+        ),
+    ) == [
+        "ENCOUNTER.ENTOMANCER_ELITE"
+    ]
+
+
+def test_get_available_encounters_respects_act():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    runs[0].encounters[0].act = 1
+    runs[0].encounters[1].act = 2
+
+    assert get_available_encounters(
+        runs,
+        EncounterFilter(act=1),
+    ) == [
+        "ENCOUNTER.ENTOMANCER_ELITE"
+    ]
+
+
+def test_get_available_encounters_without_filters():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ZETA",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.ALPHA",
+                    "boss",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    assert get_available_encounters(runs) == [
+        "ENCOUNTER.ALPHA",
+        "ENCOUNTER.ZETA",
+    ]
