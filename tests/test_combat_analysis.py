@@ -7,6 +7,7 @@ from analysis.combat_analysis import (
     encounter_won,
     filter_encounters,
     filter_run_encounters,
+    filter_runs_by_encounter,
 )
 
 from data_models.encounter_data import EncounterData
@@ -522,3 +523,126 @@ def test_filter_run_encounters_applies_all_filters():
     assert encounter.encounter == (
         "ENCOUNTER.WATERFALL_GIANT_BOSS"
     )
+
+def test_filter_runs_by_encounter():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+            ]
+        ),
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.SENTRY_ELITE",
+                    "elite",
+                    0,
+                ),
+            ]
+        ),
+    ]
+
+    result = filter_runs_by_encounter(
+        runs,
+        encounter_name="ENCOUNTER.ENTOMANCER_ELITE",
+    )
+
+    assert len(result) == 1
+    assert result[0] is runs[0]
+
+
+def test_filter_runs_by_encounter_returns_each_run_once():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    30,
+                ),
+            ]
+        ),
+    ]
+
+    result = filter_runs_by_encounter(
+        runs,
+        encounter_name="ENCOUNTER.ENTOMANCER_ELITE",
+    )
+
+    assert len(result) == 1
+    assert result[0] is runs[0]
+
+
+def test_filter_runs_by_encounter_combines_filters():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+                make_encounter(
+                    "ENCOUNTER.WATERFALL_GIANT_BOSS",
+                    "boss",
+                    20,
+                ),
+            ]
+        ),
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    runs[0].encounters[0].act = 2
+    runs[1].encounters[0].act = 1
+
+    result = filter_runs_by_encounter(
+        runs,
+        act=2,
+        encounter_type="elite",
+        encounter_name="ENCOUNTER.ENTOMANCER_ELITE",
+    )
+
+    assert len(result) == 1
+    assert result[0] is runs[0]
+
+
+def test_filter_runs_by_encounter_returns_empty_when_no_match():
+
+    runs = [
+        make_run(
+            [
+                make_encounter(
+                    "ENCOUNTER.ENTOMANCER_ELITE",
+                    "elite",
+                    20,
+                ),
+            ]
+        ),
+    ]
+
+    result = filter_runs_by_encounter(
+        runs,
+        encounter_name="ENCOUNTER.SENTRY_ELITE",
+    )
+
+    assert result == []

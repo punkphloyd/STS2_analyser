@@ -94,6 +94,40 @@ def filter_run_encounters(
 
     return results
 
+def filter_runs_by_encounter(
+    runs: list[RunData],
+    act: int | None = None,
+    encounter_type: str | None = None,
+    encounter_name: str | None = None,
+) -> list[RunData]:
+    """Return runs containing at least one matching encounter."""
+
+    results = []
+
+    for run in runs:
+
+        for encounter in run.encounters:
+
+            if act is not None and encounter.act != act:
+                continue
+
+            if (
+                encounter_type is not None
+                and encounter.encounter_type != encounter_type
+            ):
+                continue
+
+            if (
+                encounter_name is not None
+                and encounter.encounter != encounter_name
+            ):
+                continue
+
+            results.append(run)
+            break
+
+    return results
+
 def calculate_encounter_statistics(
     runs: list[RunData],
     act: int | None = None,
