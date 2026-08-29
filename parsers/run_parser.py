@@ -1,10 +1,15 @@
 import json
 from pathlib import Path
 
-from data_models.run_data import RunData
-from parsers.metadata_parser import parse_metadata
-from data_models.encounter_data import EncounterData
+from data_models.card_acquisition import CardAcquisition
+from data_models.card_reward import CardReward
+from data_models.card_transformation import CardTransformation
+from data_models.card_upgrade import CardUpgrade
 from data_models.death_data import DeathData
+from data_models.encounter_data import EncounterData
+from data_models.run_data import RunData
+from parsers.card_parser import parse_card_data
+from parsers.metadata_parser import parse_metadata
 from parsers.relic_parser import parse_relic_acquisitions
 
 
@@ -13,10 +18,16 @@ def parse_neow_relic_choices(
 ) -> tuple[list[str], str | None]:
     """Return the Neow relic choices and selected relic."""
 
-    for map_point_group in data.get("map_point_history", []):
+    for map_point_group in data.get(
+        "map_point_history",
+        [],
+    ):
         for map_point in map_point_group:
 
-            rooms = map_point.get("rooms", [])
+            rooms = map_point.get(
+                "rooms",
+                []
+            )
 
             if not any(
                 room.get("model_id") == "EVENT.NEOW"
@@ -24,7 +35,10 @@ def parse_neow_relic_choices(
             ):
                 continue
 
-            player_stats = map_point.get("player_stats", [])
+            player_stats = map_point.get(
+                "player_stats",
+                []
+            )
 
             if not player_stats:
                 return [], None
@@ -53,10 +67,15 @@ def parse_neow_relic_choices(
     return [], None
 
 
-def parse_run(path: Path) -> RunData:
+def parse_run(
+    path: Path,
+) -> RunData:
     """Parse a Slay the Spire 2 .run file into a RunData object."""
 
-    with path.open("r", encoding="utf-8") as file:
+    with path.open(
+        "r",
+        encoding="utf-8",
+    ) as file:
         data: dict = json.load(file)
 
     metadata = parse_metadata(path)
@@ -70,6 +89,12 @@ def parse_run(path: Path) -> RunData:
     encounters = parse_encounter_data(data)
     relic_acquisitions = parse_relic_acquisitions(data)
 
+    (
+        card_rewards,
+        card_acquisitions,
+        card_upgrades,
+        card_transformations,
+    ) = parse_card_data(data)
 
     return RunData(
         metadata=metadata,
@@ -79,9 +104,16 @@ def parse_run(path: Path) -> RunData:
         death_data=death_data,
         encounters=encounters,
         relic_acquisitions=relic_acquisitions,
+        card_rewards=card_rewards,
+        card_acquisitions=card_acquisitions,
+        card_upgrades=card_upgrades,
+        card_transformations=card_transformations,
     )
 
-def parse_death_data(data: dict) -> DeathData | None:
+
+def parse_death_data(
+    data: dict,
+) -> DeathData | None:
     """Extract death information from a run."""
 
     if data["win"]:
@@ -97,7 +129,9 @@ def parse_death_data(data: dict) -> DeathData | None:
     )
 
 
-def parse_floor_reached(data: dict) -> int:
+def parse_floor_reached(
+    data: dict,
+) -> int:
     """Return the number of map points reached during the run."""
 
     map_point_history = data.get(
@@ -109,6 +143,7 @@ def parse_floor_reached(data: dict) -> int:
         len(act)
         for act in map_point_history
     )
+
 
 def parse_encounter_data(
     data: dict,
