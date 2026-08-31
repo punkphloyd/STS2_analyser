@@ -6,6 +6,18 @@ from analysis.card_analysis import (
     calculate_card_skip_statistics,
     calculate_card_statistics,
 )
+from analysis.card_analysis import (
+    CardAcquisitionSourceStatistics,
+    CardChoiceStatistics,
+    CardCopyCountStatistics,
+    CardSkipStatistics,
+    CardStatistics,
+    calculate_card_acquisition_source_statistics,
+    calculate_card_choice_statistics,
+    calculate_card_copy_count_statistics,
+    calculate_card_skip_statistics,
+    calculate_card_statistics,
+)
 from data_models.card_acquisition import CardAcquisition
 from data_models.card_reward import CardReward
 from data_models.run_data import RunData
@@ -663,3 +675,289 @@ def test_card_acquisition_source_statistics_keeps_cards_independent():
     assert result[
         "CARD.DEADLY_POISON"
     ]["shop"].acquisitions == 1
+
+
+def test_card_copy_count_statistics_empty_runs():
+    result = calculate_card_copy_count_statistics([])
+
+    assert result == {}
+
+
+def test_card_copy_count_statistics_one_copy():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+        ],
+    )
+
+    result = calculate_card_copy_count_statistics([run])
+
+    assert result == {
+        "CARD.CLOAK_AND_DAGGER": {
+            1: CardCopyCountStatistics(
+                runs=1,
+                wins=1,
+            ),
+        },
+    }
+
+
+def test_card_copy_count_statistics_two_copies():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=7,
+                source="shop",
+            ),
+        ],
+    )
+
+    result = calculate_card_copy_count_statistics([run])
+
+    assert result == {
+        "CARD.CLOAK_AND_DAGGER": {
+            2: CardCopyCountStatistics(
+                runs=1,
+                wins=1,
+            ),
+        },
+    }
+
+
+def test_card_copy_count_statistics_multiple_runs_same_copy_count():
+    winning_run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+        ],
+    )
+
+    losing_run = make_run(
+        victory=False,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=5,
+                source="shop",
+            ),
+        ],
+    )
+
+    result = calculate_card_copy_count_statistics(
+        [
+            winning_run,
+            losing_run,
+        ]
+    )
+
+    stats = result[
+        "CARD.CLOAK_AND_DAGGER"
+    ][1]
+
+    assert stats.runs == 2
+    assert stats.wins == 1
+    assert stats.win_rate == 0.5
+
+
+def test_card_copy_count_statistics_separates_copy_counts():
+    one_copy_run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+        ],
+    )
+
+    two_copy_run = make_run(
+        victory=False,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=6,
+                source="shop",
+            ),
+        ],
+    )
+
+    result = calculate_card_copy_count_statistics(
+        [
+            one_copy_run,
+            two_copy_run,
+        ]
+    )
+
+    assert result[
+        "CARD.CLOAK_AND_DAGGER"
+    ][1] == CardCopyCountStatistics(
+        runs=1,
+        wins=1,
+    )
+
+    assert result[
+        "CARD.CLOAK_AND_DAGGER"
+    ][2] == CardCopyCountStatistics(
+        runs=1,
+        wins=0,
+    )
+
+
+def test_card_copy_count_statistics_three_copies():
+    run = make_run(
+        victory=False,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=5,
+                source="shop",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=9,
+                source="monster",
+            ),
+        ],
+    )
+
+    result = calculate_card_copy_count_statistics([run])
+
+    stats = result[
+        "CARD.CLOAK_AND_DAGGER"
+    ][3]
+
+    assert stats.runs == 1
+    assert stats.wins == 0
+    assert stats.win_rate == 0.0
+
+
+def test_card_copy_count_statistics_multiple_cards():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=5,
+                source="shop",
+            ),
+            make_acquisition(
+                "CARD.DEADLY_POISON",
+                floor=7,
+                source="monster",
+            ),
+        ],
+    )
+
+    result = calculate_card_copy_count_statistics([run])
+
+    assert result[
+        "CARD.CLOAK_AND_DAGGER"
+    ][2] == CardCopyCountStatistics(
+        runs=1,
+        wins=1,
+    )
+
+    assert result[
+        "CARD.DEADLY_POISON"
+    ][1] == CardCopyCountStatistics(
+        runs=1,
+        wins=1,
+    )
+
+
+def test_card_copy_count_statistics_counts_copies_regardless_of_source():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=4,
+                source="shop",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=6,
+                source="event",
+            ),
+        ],
+    )
+
+    result = calculate_card_copy_count_statistics([run])
+
+    assert 3 in result[
+        "CARD.CLOAK_AND_DAGGER"
+    ]
+
+    assert result[
+        "CARD.CLOAK_AND_DAGGER"
+    ][3].runs == 1
+
+
+def test_card_copy_count_statistics_one_run_only_contributes_once():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=4,
+                source="monster",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=5,
+                source="shop",
+            ),
+        ],
+    )
+
+    result = calculate_card_copy_count_statistics([run])
+
+    assert result[
+        "CARD.CLOAK_AND_DAGGER"
+    ][3].runs == 1
+
+    assert result[
+        "CARD.CLOAK_AND_DAGGER"
+    ][3].wins == 1

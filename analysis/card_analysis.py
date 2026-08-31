@@ -74,6 +74,30 @@ class CardAcquisitionSourceStatistics:
         return self.wins / self.runs_acquired
 
 
+@dataclass(slots=True)
+class CardCopyCountStatistics:
+    """
+    Statistics for runs acquiring a particular number of copies
+    of a card.
+
+    runs counts distinct runs.
+
+    wins counts winning runs.
+    """
+
+    runs: int
+    wins: int
+
+    @property
+    def win_rate(self) -> float | None:
+        """Return the win rate for this copy-count group."""
+
+        if self.runs == 0:
+            return None
+
+        return self.wins / self.runs
+
+
 def calculate_card_choice_statistics(
     runs: list[RunData],
 ) -> dict[str, CardChoiceStatistics]:
@@ -211,7 +235,6 @@ def calculate_card_skip_statistics(
 
                 if was_skipped:
                     winning_skips += 1
-
             else:
                 losing_rewards += 1
 
@@ -336,5 +359,76 @@ def calculate_card_acquisition_source_statistics(
                     wins=wins,
                 )
             )
+
+    return result
+
+
+def calculate_card_copy_count_statistics(
+    runs: list[RunData],
+) -> dict[
+    str,
+    dict[int, CardCopyCountStatistics],
+]:
+    """
+    Calculate win statistics for each number of copies of a card
+    acquired during a run.
+
+    Each run contributes at most one observation for each card.
+
+    The copy count is the total number of acquisitions of that
+    card during the run, regardless of acquisition source.
+
+    The result is keyed first by card ID and then by the exact
+    number of copies acquired.
+
+    For example:
+
+        {
+            "CARD.CLOAK_AND_DAGGER": {
+                1: CardCopyCountStatistics(...),
+                2: CardCopyCountStatistics(...),
+                3: CardCopyCountStatistics(...),
+            }
+        }
+    """
+
+    if not runs:
+        return {}
+
+    result: dict[
+        str,
+        dict[int, CardCopyCountStatistics],
+    ] = {}
+
+    for run in runs:
+        copy_counts: dict[str, int] = {}
+
+        for acquisition in run.card_acquisitions:
+            card = acquisition.card
+            copy_counts[card] = (
+                copy_counts.get(card, 0) + 1
+            )
+
+        for card, copy_count in copy_counts.items():
+            card_statistics = result.setdefault(
+                card,
+                {},
+            )
+
+            statistics = card_statistics.get(
+                copy_count
+            )
+
+            if statistics is None:
+                statistics = CardCopyCountStatistics(
+                    runs=0,
+                    wins=0,
+                )
+                card_statistics[copy_count] = statistics
+
+            statistics.runs += 1
+
+            if run.metadata.victory:
+                statistics.wins += 1
 
     return result
