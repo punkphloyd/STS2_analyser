@@ -11,7 +11,10 @@ from data_models.card_reward import CardReward
 from data_models.run_data import RunData
 from data_models.run_metadata import RunMetadata
 from parsers.run_parser import parse_run
-
+from analysis.card_analysis import (
+    CardAcquisitionSourceStatistics,
+    calculate_card_acquisition_source_statistics,
+)
 
 EXAMPLE_RUNFILES = Path("example_runfiles")
 
@@ -404,3 +407,259 @@ def test_real_run_card_acquisition_statistics():
     else:
         assert cloak.wins == 0
         assert cloak.win_rate == 0.0
+
+def test_card_acquisition_source_statistics_empty_runs():
+    result = calculate_card_acquisition_source_statistics([])
+
+    assert result == {}
+
+
+def test_card_acquisition_source_statistics_single_acquisition():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+        ],
+    )
+
+    result = calculate_card_acquisition_source_statistics(
+        [run]
+    )
+
+    assert result == {
+        "CARD.CLOAK_AND_DAGGER": {
+            "monster": CardAcquisitionSourceStatistics(
+                acquisitions=1,
+                runs_acquired=1,
+                wins=1,
+            ),
+        },
+    }
+
+
+def test_card_acquisition_source_statistics_multiple_copies_same_source():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=6,
+                source="monster",
+            ),
+        ],
+    )
+
+    result = calculate_card_acquisition_source_statistics(
+        [run]
+    )
+
+    stats = result[
+        "CARD.CLOAK_AND_DAGGER"
+    ]["monster"]
+
+    assert stats.acquisitions == 2
+    assert stats.runs_acquired == 1
+    assert stats.wins == 1
+    assert stats.win_rate == 1.0
+
+
+def test_card_acquisition_source_statistics_same_card_multiple_sources():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=5,
+                source="shop",
+            ),
+        ],
+    )
+
+    result = calculate_card_acquisition_source_statistics(
+        [run]
+    )
+
+    assert result[
+        "CARD.CLOAK_AND_DAGGER"
+    ]["monster"] == CardAcquisitionSourceStatistics(
+        acquisitions=1,
+        runs_acquired=1,
+        wins=1,
+    )
+
+    assert result[
+        "CARD.CLOAK_AND_DAGGER"
+    ]["shop"] == CardAcquisitionSourceStatistics(
+        acquisitions=1,
+        runs_acquired=1,
+        wins=1,
+    )
+
+
+def test_card_acquisition_source_statistics_multiple_runs():
+    winning_run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+        ],
+    )
+
+    losing_run = make_run(
+        victory=False,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=4,
+                source="monster",
+            ),
+        ],
+    )
+
+    result = calculate_card_acquisition_source_statistics(
+        [
+            winning_run,
+            losing_run,
+        ]
+    )
+
+    stats = result[
+        "CARD.CLOAK_AND_DAGGER"
+    ]["monster"]
+
+    assert stats.acquisitions == 2
+    assert stats.runs_acquired == 2
+    assert stats.wins == 1
+    assert stats.win_rate == 0.5
+
+
+def test_card_acquisition_source_statistics_multiple_copies_count_one_win():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="shop",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="shop",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="shop",
+            ),
+        ],
+    )
+
+    result = calculate_card_acquisition_source_statistics(
+        [run]
+    )
+
+    stats = result[
+        "CARD.CLOAK_AND_DAGGER"
+    ]["shop"]
+
+    assert stats.acquisitions == 3
+    assert stats.runs_acquired == 1
+    assert stats.wins == 1
+
+
+def test_card_acquisition_source_statistics_same_card_source_across_runs():
+    first_run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=5,
+                source="monster",
+            ),
+        ],
+    )
+
+    second_run = make_run(
+        victory=False,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=4,
+                source="monster",
+            ),
+        ],
+    )
+
+    result = calculate_card_acquisition_source_statistics(
+        [
+            first_run,
+            second_run,
+        ]
+    )
+
+    stats = result[
+        "CARD.CLOAK_AND_DAGGER"
+    ]["monster"]
+
+    assert stats.acquisitions == 3
+    assert stats.runs_acquired == 2
+    assert stats.wins == 1
+    assert stats.win_rate == 0.5
+
+
+def test_card_acquisition_source_statistics_keeps_cards_independent():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.CLOAK_AND_DAGGER",
+                floor=3,
+                source="monster",
+            ),
+            make_acquisition(
+                "CARD.DEADLY_POISON",
+                floor=4,
+                source="shop",
+            ),
+        ],
+    )
+
+    result = calculate_card_acquisition_source_statistics(
+        [run]
+    )
+
+    assert set(result) == {
+        "CARD.CLOAK_AND_DAGGER",
+        "CARD.DEADLY_POISON",
+    }
+
+    assert result[
+        "CARD.CLOAK_AND_DAGGER"
+    ]["monster"].acquisitions == 1
+
+    assert result[
+        "CARD.DEADLY_POISON"
+    ]["shop"].acquisitions == 1

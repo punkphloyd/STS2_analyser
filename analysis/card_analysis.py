@@ -5,6 +5,8 @@ from data_models.run_data import RunData
 
 @dataclass(slots=True)
 class CardChoiceStatistics:
+    """Statistics for a card when offered as a card reward."""
+
     offered: int
     picks: int
     pick_rate: float
@@ -14,11 +16,15 @@ class CardChoiceStatistics:
 
 @dataclass(slots=True)
 class CardStatistics:
+    """Statistics for runs in which a card was acquired."""
+
     runs_acquired: int
     wins: int
 
     @property
     def win_rate(self) -> float | None:
+        """Return the win rate for runs acquiring this card."""
+
         if self.runs_acquired == 0:
             return None
 
@@ -27,6 +33,8 @@ class CardStatistics:
 
 @dataclass(slots=True)
 class CardSkipStatistics:
+    """Statistics for skipped card rewards."""
+
     rewards: int
     skipped: int
     skip_rate: float
@@ -36,6 +44,34 @@ class CardSkipStatistics:
     losing_rewards: int
     losing_skips: int
     losing_skip_rate: float | None
+
+
+@dataclass(slots=True)
+class CardAcquisitionSourceStatistics:
+    """
+    Statistics for a card acquired from a particular source.
+
+    acquisitions counts individual card copies.
+
+    runs_acquired counts distinct runs in which at least one
+    copy of the card was acquired from this source.
+
+    wins counts distinct winning runs in which at least one
+    copy of the card was acquired from this source.
+    """
+
+    acquisitions: int
+    runs_acquired: int
+    wins: int
+
+    @property
+    def win_rate(self) -> float | None:
+        """Return the win rate for runs acquiring this card."""
+
+        if self.runs_acquired == 0:
+            return None
+
+        return self.wins / self.runs_acquired
 
 
 def calculate_card_choice_statistics(
@@ -51,9 +87,7 @@ def calculate_card_choice_statistics(
     win_counts: dict[str, int] = {}
 
     for run in runs:
-
         for reward in run.card_rewards:
-
             for card in reward.offered_cards:
                 offered_counts[card] = (
                     offered_counts.get(card, 0) + 1
@@ -72,7 +106,6 @@ def calculate_card_choice_statistics(
     result: dict[str, CardChoiceStatistics] = {}
 
     for card, offered in offered_counts.items():
-
         picks = pick_counts.get(card, 0)
         wins = win_counts.get(card, 0)
 
@@ -94,7 +127,13 @@ def calculate_card_choice_statistics(
 def calculate_card_statistics(
     runs: list[RunData],
 ) -> dict[str, CardStatistics]:
-    """Calculate acquisition and win statistics for cards."""
+    """
+    Calculate acquisition and win statistics for cards.
+
+    Each card is counted at most once per run. Multiple copies
+    acquired during a single run therefore contribute one run
+    to runs_acquired.
+    """
 
     if not runs:
         return {}
@@ -103,14 +142,12 @@ def calculate_card_statistics(
     win_counts: dict[str, int] = {}
 
     for run in runs:
-
         acquired_cards = {
             acquisition.card
             for acquisition in run.card_acquisitions
         }
 
         for card in acquired_cards:
-
             acquisition_counts[card] = (
                 acquisition_counts.get(card, 0) + 1
             )
@@ -123,7 +160,6 @@ def calculate_card_statistics(
     result: dict[str, CardStatistics] = {}
 
     for card, runs_acquired in acquisition_counts.items():
-
         wins = win_counts.get(card, 0)
 
         result[card] = CardStatistics(
@@ -162,9 +198,7 @@ def calculate_card_skip_statistics(
     losing_skips = 0
 
     for run in runs:
-
         for reward in run.card_rewards:
-
             rewards += 1
 
             was_skipped = not reward.picked_cards
@@ -207,3 +241,100 @@ def calculate_card_skip_statistics(
             else None
         ),
     )
+
+
+def calculate_card_acquisition_source_statistics(
+    runs: list[RunData],
+) -> dict[
+    str,
+    dict[str, CardAcquisitionSourceStatistics],
+]:
+    """
+    Calculate card acquisition statistics broken down by source.
+
+    The result is keyed first by card ID and then by acquisition
+    source.
+
+    For each card/source combination:
+
+    - acquisitions counts individual card copies.
+    - runs_acquired counts distinct runs containing at least one
+      acquisition of the card from that source.
+    - wins counts distinct winning runs containing at least one
+      acquisition of the card from that source.
+    """
+
+    if not runs:
+        return {}
+
+    acquisition_counts: dict[
+        str,
+        dict[str, int],
+    ] = {}
+
+    run_sets: dict[
+        str,
+        dict[str, set[int]],
+    ] = {}
+
+    win_counts: dict[
+        str,
+        dict[str, int],
+    ] = {}
+
+    for run_index, run in enumerate(runs):
+        seen_in_run: set[tuple[str, str]] = set()
+
+        for acquisition in run.card_acquisitions:
+            card = acquisition.card
+            source = acquisition.source
+
+            acquisition_counts.setdefault(card, {})
+            acquisition_counts[card][source] = (
+                acquisition_counts[card].get(source, 0) + 1
+            )
+
+            run_sets.setdefault(card, {})
+            run_sets[card].setdefault(source, set())
+            run_sets[card][source].add(run_index)
+
+            key = (card, source)
+
+            if key in seen_in_run:
+                continue
+
+            seen_in_run.add(key)
+
+            if run.metadata.victory:
+                win_counts.setdefault(card, {})
+                win_counts[card][source] = (
+                    win_counts[card].get(source, 0) + 1
+                )
+
+    result: dict[
+        str,
+        dict[str, CardAcquisitionSourceStatistics],
+    ] = {}
+
+    for card, sources in acquisition_counts.items():
+        result[card] = {}
+
+        for source, acquisitions in sources.items():
+            runs_acquired = len(
+                run_sets[card][source]
+            )
+
+            wins = win_counts.get(
+                card,
+                {},
+            ).get(source, 0)
+
+            result[card][source] = (
+                CardAcquisitionSourceStatistics(
+                    acquisitions=acquisitions,
+                    runs_acquired=runs_acquired,
+                    wins=wins,
+                )
+            )
+
+    return result
