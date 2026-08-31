@@ -17,7 +17,7 @@ from data_models.card_transformation import CardTransformation
 from data_models.card_upgrade import CardUpgrade
 from data_models.run_data import RunData
 from data_models.run_metadata import RunMetadata
-
+from parsers.run_parser import parse_run
 
 def make_run(
     *,
@@ -873,3 +873,85 @@ def test_get_card_states_at_floor_rejects_floor_after_run():
         raise AssertionError(
             "Expected ValueError"
         )
+
+def test_real_run_transformation_produces_unupgraded_card():
+    path = (
+        Path("example_runfiles")
+        / "1780143874.run"
+    )
+
+    run = parse_run(path)
+
+    states = get_card_states_at_floor(
+        run,
+        7,
+    )
+
+    assert CardState(
+        "CARD.TORIC_TOUGHNESS",
+    ) in states
+
+    assert CardState(
+        "CARD.TORIC_TOUGHNESS",
+        upgraded=True,
+    ) not in states
+
+
+def test_real_run_transformation_then_upgrade():
+    path = (
+        Path("example_runfiles")
+        / "1780143874.run"
+    )
+
+    run = parse_run(path)
+
+    states_after_floor_7 = (
+        get_card_states_at_floor(
+            run,
+            7,
+        )
+    )
+
+    assert CardState(
+        "CARD.TORIC_TOUGHNESS",
+    ) in states_after_floor_7
+
+    assert CardState(
+        "CARD.TORIC_TOUGHNESS",
+        upgraded=True,
+    ) not in states_after_floor_7
+
+    states_after_floor_8 = (
+        get_card_states_at_floor(
+            run,
+            8,
+        )
+    )
+
+    assert CardState(
+        "CARD.TORIC_TOUGHNESS",
+        upgraded=True,
+    ) in states_after_floor_8
+
+    assert CardState(
+        "CARD.TORIC_TOUGHNESS",
+    ) not in states_after_floor_8
+
+
+def test_real_run_reconstructs_multiple_card_copies():
+    path = (
+        Path("example_runfiles")
+        / "1780143874.run"
+    )
+
+    run = parse_run(path)
+
+    states = reconstruct_card_states(run)
+
+    assert states.count(
+        CardState("CARD.DAGGER_THROW")
+    ) == 2
+
+    assert states.count(
+        CardState("CARD.ACROBATICS")
+    ) == 2
