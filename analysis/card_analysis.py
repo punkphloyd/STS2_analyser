@@ -1,7 +1,22 @@
 from dataclasses import dataclass
 
 from data_models.run_data import RunData
+from analysis.card_state import reconstruct_card_states
 
+@dataclass(slots=True)
+class CardFinalCopyCountStatistics:
+    card: str
+    copy_count: int
+    runs: int = 0
+    wins: int = 0
+    losses: int = 0
+
+    @property
+    def win_rate(self) -> float:
+        if self.runs == 0:
+            return 0.0
+
+        return self.wins / self.runs
 
 @dataclass(slots=True)
 class CardChoiceStatistics:
@@ -432,3 +447,46 @@ def calculate_card_copy_count_statistics(
                 statistics.wins += 1
 
     return result
+
+def calculate_card_final_copy_count_statistics(
+    runs: list[RunData],
+) -> dict[str, dict[int, CardFinalCopyCountStatistics]]:
+    """Calculate statistics for final card copy counts."""
+
+    statistics: dict[
+        str,
+        dict[int, CardFinalCopyCountStatistics],
+    ] = {}
+
+    for run in runs:
+        card_states = reconstruct_card_states(run)
+
+        copy_counts: dict[str, int] = {}
+
+        for card_state in card_states:
+            copy_counts[card_state.card] = (
+                copy_counts.get(card_state.card, 0) + 1
+            )
+
+        for card, copy_count in copy_counts.items():
+            if card not in statistics:
+                statistics[card] = {}
+
+            if copy_count not in statistics[card]:
+                statistics[card][copy_count] = (
+                    CardFinalCopyCountStatistics(
+                        card=card,
+                        copy_count=copy_count,
+                    )
+                )
+
+            result = statistics[card][copy_count]
+
+            result.runs += 1
+
+            if run.metadata.victory:
+                result.wins += 1
+            else:
+                result.losses += 1
+
+    return statistics

@@ -2,19 +2,16 @@ from datetime import datetime
 from pathlib import Path
 
 from analysis.card_analysis import (
-    calculate_card_choice_statistics,
-    calculate_card_skip_statistics,
-    calculate_card_statistics,
-)
-from analysis.card_analysis import (
     CardAcquisitionSourceStatistics,
     CardChoiceStatistics,
     CardCopyCountStatistics,
+    CardFinalCopyCountStatistics,
     CardSkipStatistics,
     CardStatistics,
     calculate_card_acquisition_source_statistics,
     calculate_card_choice_statistics,
     calculate_card_copy_count_statistics,
+    calculate_card_final_copy_count_statistics,
     calculate_card_skip_statistics,
     calculate_card_statistics,
 )
@@ -27,7 +24,7 @@ from analysis.card_analysis import (
     CardAcquisitionSourceStatistics,
     calculate_card_acquisition_source_statistics,
 )
-
+from data_models.card_transformation import CardTransformation
 EXAMPLE_RUNFILES = Path("example_runfiles")
 
 
@@ -36,6 +33,7 @@ def make_run(
     victory: bool,
     card_rewards: list[CardReward] | None = None,
     card_acquisitions: list[CardAcquisition] | None = None,
+    card_transformations: list[CardTransformation] | None = None,
 ) -> RunData:
     return RunData(
         metadata=RunMetadata(
@@ -57,6 +55,11 @@ def make_run(
         card_acquisitions=(
             card_acquisitions
             if card_acquisitions is not None
+            else []
+        ),
+        card_transformations=(
+            card_transformations
+            if card_transformations is not None
             else []
         ),
     )
@@ -961,3 +964,40 @@ def test_card_copy_count_statistics_one_run_only_contributes_once():
     assert result[
         "CARD.CLOAK_AND_DAGGER"
     ][3].wins == 1
+
+def test_card_final_copy_count_statistics_uses_final_card_state_after_transformation():
+    run = make_run(
+        victory=True,
+        card_transformations=[
+            CardTransformation(
+                original_card="CARD.STRIKE_SILENT",
+                final_card="CARD.BASH",
+                source="transform",
+                act=1,
+                floor=3,
+                act_floor=3,
+            ),
+        ],
+    )
+
+    result = calculate_card_final_copy_count_statistics([run])
+
+    assert result[
+        "CARD.STRIKE_SILENT"
+    ][4] == CardFinalCopyCountStatistics(
+        card="CARD.STRIKE_SILENT",
+        copy_count=4,
+        runs=1,
+        wins=1,
+        losses=0,
+    )
+
+    assert result[
+        "CARD.BASH"
+    ][1] == CardFinalCopyCountStatistics(
+        card="CARD.BASH",
+        copy_count=1,
+        runs=1,
+        wins=1,
+        losses=0,
+    )
