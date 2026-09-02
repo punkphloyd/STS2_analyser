@@ -798,3 +798,61 @@ def test_real_run_card_upgrade():
     assert upgrade.act == 1
     assert upgrade.floor == 8
     assert upgrade.act_floor == 8
+
+
+def test_parse_card_acquisition_from_unknown_map_point_with_monster_room():
+    data = {
+        "map_point_history": [
+            [
+                {
+                    "map_point_type": "unknown",
+                    "player_stats": [
+                        {
+                            "card_choices": [
+                                {
+                                    "card": {
+                                        "floor_added_to_deck": 9,
+                                        "id": "CARD.TACTICIAN",
+                                    },
+                                    "was_picked": True,
+                                },
+                            ],
+                            "cards_gained": [
+                                {
+                                    "id": "CARD.TACTICIAN",
+                                },
+                            ],
+                        },
+                    ],
+                    "rooms": [
+                        {
+                            "model_id": (
+                                "ENCOUNTER.VINE_SHAMBLER_NORMAL"
+                            ),
+                            "room_type": "monster",
+                        },
+                    ],
+                },
+            ],
+        ],
+    }
+
+    rewards, acquisitions, upgrades, transformations = (
+        parse_card_data(data)
+    )
+
+    assert rewards == []
+
+    assert len(acquisitions) == 1
+
+    acquisition = acquisitions[0]
+
+    assert acquisition.card == "CARD.TACTICIAN"
+    assert acquisition.source == "monster"
+    assert acquisition.act == 1
+    assert acquisition.floor == 1
+    assert acquisition.act_floor == 1
+    assert acquisition.upgraded is False
+
+    assert upgrades == []
+    assert transformations == []

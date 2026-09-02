@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from collections import Counter
 
 from analysis.card_state import (
     CardState,
@@ -955,3 +956,567 @@ def test_real_run_reconstructs_multiple_card_copies():
     assert states.count(
         CardState("CARD.ACROBATICS")
     ) == 2
+
+def test_real_run_card_state_progression():
+    path = (
+        Path("example_runfiles")
+        / "1780143874.run"
+    )
+
+    run = parse_run(path)
+
+    print("neow_bonus_relic:", run.neow_bonus_relic)
+    print("neow_relic_choices:", run.neow_relic_choices)
+    print("metadata:", run.metadata)
+    for acquisition in run.card_acquisitions:
+        print(acquisition)
+
+    def signature(states):
+        return Counter(
+            (
+                card_state.card,
+                card_state.upgraded,
+            )
+            for card_state in states
+        )
+
+    expected_states = {
+        0: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 5,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+        }),
+
+        1: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 5,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+        }),
+
+        2: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 5,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+        }),
+
+        3: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 5,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+        }),
+
+        4: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 5,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+        }),
+
+        5: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 5,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+        }),
+
+        6: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 5,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+        }),
+
+        7: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", False): 1,
+        }),
+
+        8: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+        }),
+
+        9: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+        }),
+
+        12: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 1,
+        }),
+
+        13: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 1,
+            ("CARD.HAND_TRICK", False): 1,
+        }),
+
+        14: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 1,
+            ("CARD.HAND_TRICK", False): 1,
+            ("CARD.DAGGER_SPRAY", False): 1,
+        }),
+
+        15: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 1,
+            ("CARD.HAND_TRICK", False): 1,
+            ("CARD.DAGGER_SPRAY", False): 1,
+            ("CARD.FLECHETTES", False): 1,
+        }),
+
+        17: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 1,
+            ("CARD.HAND_TRICK", False): 1,
+            ("CARD.DAGGER_SPRAY", False): 1,
+            ("CARD.FLECHETTES", False): 1,
+            ("CARD.CORROSIVE_WAVE", False): 1,
+        }),
+
+        19: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 1,
+            ("CARD.HAND_TRICK", False): 1,
+            ("CARD.DAGGER_SPRAY", False): 1,
+            ("CARD.FLECHETTES", False): 1,
+            ("CARD.CORROSIVE_WAVE", False): 1,
+            ("CARD.WELL_LAID_PLANS", False): 1,
+        }),
+
+        20: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 2,
+            ("CARD.HAND_TRICK", False): 1,
+            ("CARD.DAGGER_SPRAY", False): 1,
+            ("CARD.FLECHETTES", False): 1,
+            ("CARD.CORROSIVE_WAVE", False): 1,
+            ("CARD.WELL_LAID_PLANS", False): 1,
+            ("CARD.RICOCHET", False): 1,
+            ("CARD.THINKING_AHEAD", False): 1,
+        }),
+
+        21: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 1,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 2,
+            ("CARD.HAND_TRICK", False): 1,
+            ("CARD.DAGGER_SPRAY", False): 1,
+            ("CARD.FLECHETTES", False): 1,
+            ("CARD.CORROSIVE_WAVE", False): 1,
+            ("CARD.WELL_LAID_PLANS", False): 1,
+            ("CARD.RICOCHET", False): 1,
+            ("CARD.THINKING_AHEAD", False): 1,
+            ("CARD.PREPARED", False): 1,
+        }),
+
+        22: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 2,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 2,
+            ("CARD.HAND_TRICK", False): 1,
+            ("CARD.DAGGER_SPRAY", False): 1,
+            ("CARD.FLECHETTES", False): 1,
+            ("CARD.CORROSIVE_WAVE", False): 1,
+            ("CARD.WELL_LAID_PLANS", False): 1,
+            ("CARD.RICOCHET", False): 1,
+            ("CARD.THINKING_AHEAD", False): 1,
+            ("CARD.PREPARED", False): 1,
+        }),
+
+        23: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 2,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 2,
+            ("CARD.HAND_TRICK", False): 1,
+            ("CARD.DAGGER_SPRAY", False): 1,
+            ("CARD.FLECHETTES", False): 1,
+            ("CARD.CORROSIVE_WAVE", False): 1,
+            ("CARD.WELL_LAID_PLANS", False): 1,
+            ("CARD.RICOCHET", False): 1,
+            ("CARD.THINKING_AHEAD", False): 1,
+            ("CARD.PREPARED", False): 1,
+            ("CARD.PREDATOR", True): 1,
+        }),
+
+        28: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 2,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 2,
+            ("CARD.HAND_TRICK", False): 1,
+            ("CARD.DAGGER_SPRAY", False): 1,
+            ("CARD.FLECHETTES", False): 1,
+            ("CARD.CORROSIVE_WAVE", False): 1,
+            ("CARD.WELL_LAID_PLANS", False): 1,
+            ("CARD.RICOCHET", False): 1,
+            ("CARD.THINKING_AHEAD", False): 1,
+            ("CARD.PREPARED", False): 1,
+            ("CARD.PREDATOR", True): 1,
+            ("CARD.CALCULATED_GAMBLE", False): 1,
+        }),
+
+        30: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 2,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 2,
+            ("CARD.HAND_TRICK", False): 1,
+            ("CARD.DAGGER_SPRAY", False): 1,
+            ("CARD.FLECHETTES", False): 1,
+            ("CARD.CORROSIVE_WAVE", False): 1,
+            ("CARD.WELL_LAID_PLANS", False): 1,
+            ("CARD.RICOCHET", False): 1,
+            ("CARD.THINKING_AHEAD", False): 1,
+            ("CARD.PREPARED", False): 1,
+            ("CARD.PREDATOR", True): 1,
+            ("CARD.CALCULATED_GAMBLE", False): 1,
+            ("CARD.FOLLOW_THROUGH", True): 1,
+        }),
+
+        31: Counter({
+            ("CARD.STRIKE_SILENT", False): 5,
+            ("CARD.DEFEND_SILENT", False): 4,
+            ("CARD.NEUTRALIZE", False): 1,
+            ("CARD.SURVIVOR", False): 1,
+            ("CARD.ASCENDERS_BANE", False): 1,
+            ("CARD.NEOWS_FURY", False): 1,
+            ("CARD.POUNCE", False): 1,
+            ("CARD.ACROBATICS", False): 2,
+            ("CARD.DEADLY_POISON", False): 1,
+            ("CARD.HAZE", False): 1,
+            ("CARD.BACKFLIP", False): 1,
+            ("CARD.CLOAK_AND_DAGGER", False): 1,
+            ("CARD.TORIC_TOUGHNESS", True): 1,
+            ("CARD.TACTICIAN", False): 1,
+            ("CARD.DAGGER_THROW", False): 2,
+            ("CARD.HAND_TRICK", False): 1,
+            ("CARD.DAGGER_SPRAY", False): 1,
+            ("CARD.FLECHETTES", False): 1,
+            ("CARD.CORROSIVE_WAVE", False): 1,
+            ("CARD.WELL_LAID_PLANS", False): 1,
+            ("CARD.RICOCHET", False): 1,
+            ("CARD.THINKING_AHEAD", False): 1,
+            ("CARD.PREPARED", False): 1,
+            ("CARD.PREDATOR", True): 1,
+            ("CARD.CALCULATED_GAMBLE", False): 1,
+            ("CARD.FOLLOW_THROUGH", True): 1,
+            ("CARD.SUCKER_PUNCH", False): 1,
+        }),
+    }
+
+    for floor, expected in expected_states.items():
+        actual = signature(
+            get_card_states_at_floor(
+                run,
+                floor,
+            )
+        )
+
+        assert actual == expected, (
+            f"Unexpected card state at floor {floor}"
+        )
+
+def test_real_run_parses_neows_fury_as_card_acquisition():
+    path = (
+        Path("example_runfiles")
+        / "1780143874.run"
+    )
+
+    run = parse_run(path)
+
+    neows_fury = [
+        acquisition
+        for acquisition in run.card_acquisitions
+        if acquisition.card == "CARD.NEOWS_FURY"
+    ]
+
+    assert len(neows_fury) == 1
+
+    acquisition = neows_fury[0]
+
+    assert acquisition.source == "event"
+    assert acquisition.act == 1
+    assert acquisition.floor == 1
+    assert acquisition.act_floor == 1
+    assert acquisition.upgraded is False
+
+def test_real_run_parses_act_start_card_acquisitions():
+    path = (
+        Path("example_runfiles")
+        / "1778412624.run"
+    )
+
+    run = parse_run(path)
+
+    debt = next(
+        acquisition
+        for acquisition in run.card_acquisitions
+        if acquisition.card == "CARD.DEBT"
+    )
+
+    brightest_flame = next(
+        acquisition
+        for acquisition in run.card_acquisitions
+        if acquisition.card == "CARD.BRIGHTEST_FLAME"
+    )
+
+    assert debt.source == "event"
+    assert debt.act == 1
+    assert debt.act_floor == 1
+
+    assert brightest_flame.source == "event"
+    assert brightest_flame.act == 2
+    assert brightest_flame.act_floor == 1
+
+def test_real_run_card_state_includes_act_start_card_acquisitions():
+    path = (
+        Path("example_runfiles")
+        / "1778412624.run"
+    )
+
+    run = parse_run(path)
+
+    act_1_floor_1 = get_card_states_at_floor(
+        run,
+        1,
+    )
+
+    assert CardState(
+        "CARD.DEBT"
+    ) in act_1_floor_1
+
+    # Act 2 floor 1 is after the entirety of Act 1.
+    act_2_floor_1 = get_card_states_at_floor(
+        run,
+        18,
+    )
+
+    assert CardState(
+        "CARD.DEBT"
+    ) in act_2_floor_1
+
+    assert CardState(
+        "CARD.BRIGHTEST_FLAME"
+    ) in act_2_floor_1

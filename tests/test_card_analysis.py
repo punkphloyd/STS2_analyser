@@ -1001,3 +1001,35 @@ def test_card_final_copy_count_statistics_uses_final_card_state_after_transforma
         wins=1,
         losses=0,
     )
+
+def test_card_final_copy_count_statistics_real_run():
+    path = (
+        Path("example_runfiles")
+        / "1780143874.run"
+    )
+
+    run = parse_run(path)
+
+    result = calculate_card_final_copy_count_statistics(
+        [run],
+    )
+
+    assert result[
+        "CARD.DAGGER_THROW"
+    ][2] == CardFinalCopyCountStatistics(
+        card="CARD.DAGGER_THROW",
+        copy_count=2,
+        runs=1,
+        wins=0,
+        losses=1,
+    )
+
+    assert result[
+        "CARD.ACROBATICS"
+    ][2] == CardFinalCopyCountStatistics(
+        card="CARD.ACROBATICS",
+        copy_count=2,
+        runs=1,
+        wins=0,
+        losses=1,
+    )

@@ -92,7 +92,6 @@ def get_card_source(
     map_point: dict,
 ) -> str | None:
     """Determine the source of card activity at a map point."""
-
     map_point_type = map_point.get(
         "map_point_type"
     )
@@ -111,11 +110,20 @@ def get_card_source(
         []
     )
 
-    if any(
-        room.get("room_type") == "event"
-        for room in rooms
-    ):
-        return "event"
+    for room in rooms:
+        room_type = room.get("room_type")
+
+        if room_type in {
+            "monster",
+            "elite",
+            "boss",
+            "shop",
+            "rest_site",
+        }:
+            return room_type
+
+        if room_type == "event":
+            return "event"
 
     return None
 
@@ -145,7 +153,7 @@ def parse_reward_cards(
     rewards: list[CardReward],
     acquisitions: list[CardAcquisition],
 ) -> None:
-    """Parse a normal fight card reward."""
+    """Parse card rewards and card acquisitions at a map point."""
 
     card_choices = stats.get(
         "card_choices",
@@ -157,38 +165,36 @@ def parse_reward_cards(
         []
     )
 
-    if not card_choices:
-        return
+    if card_choices:
+        offered_cards: list[str] = []
+        picked_cards: list[str] = []
 
-    offered_cards: list[str] = []
-    picked_cards: list[str] = []
+        for choice in card_choices:
+            card = choice.get(
+                "card",
+                {}
+            )
 
-    for choice in card_choices:
-        card = choice.get(
-            "card",
-            {}
+            card_id = card.get("id")
+
+            if card_id is None:
+                continue
+
+            offered_cards.append(card_id)
+
+            if choice.get("was_picked") is True:
+                picked_cards.append(card_id)
+
+        rewards.append(
+            CardReward(
+                source=source,
+                act=act,
+                floor=floor,
+                act_floor=act_floor,
+                offered_cards=offered_cards,
+                picked_cards=picked_cards,
+            )
         )
-
-        card_id = card.get("id")
-
-        if card_id is None:
-            continue
-
-        offered_cards.append(card_id)
-
-        if choice.get("was_picked") is True:
-            picked_cards.append(card_id)
-
-    rewards.append(
-        CardReward(
-            source=source,
-            act=act,
-            floor=floor,
-            act_floor=act_floor,
-            offered_cards=offered_cards,
-            picked_cards=picked_cards,
-        )
-    )
 
     for card in cards_gained:
         card_id = card.get("id")
@@ -212,7 +218,6 @@ def parse_reward_cards(
                 ),
             )
         )
-
 
 def parse_shop_cards(
     stats: dict,
