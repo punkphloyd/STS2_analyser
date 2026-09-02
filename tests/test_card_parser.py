@@ -841,7 +841,16 @@ def test_parse_card_acquisition_from_unknown_map_point_with_monster_room():
         parse_card_data(data)
     )
 
-    assert rewards == []
+    assert len(rewards) == 1
+
+    reward = rewards[0]
+
+    assert reward.source == "monster"
+    assert reward.act == 1
+    assert reward.floor == 1
+    assert reward.act_floor == 1
+    assert reward.offered_cards == ["CARD.TACTICIAN"]
+    assert reward.picked_cards == ["CARD.TACTICIAN"]
 
     assert len(acquisitions) == 1
 
