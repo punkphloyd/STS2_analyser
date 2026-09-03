@@ -957,6 +957,7 @@ def test_real_run_reconstructs_multiple_card_copies():
         CardState("CARD.ACROBATICS")
     ) == 2
 
+
 def test_real_run_card_state_progression():
     path = (
         Path("example_runfiles")

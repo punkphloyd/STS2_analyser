@@ -15,7 +15,9 @@ from analysis.card_analysis import (
     calculate_card_skip_statistics,
     calculate_card_statistics,
     calculate_card_correlation,
-    calculate_all_card_correlations
+    calculate_all_card_correlations,
+    CardAcquisitionTimingStatistics,
+    calculate_card_acquisition_timing_statistics,
 )
 from data_models.card_acquisition import CardAcquisition
 from data_models.card_reward import CardReward
@@ -1176,3 +1178,127 @@ def test_all_card_correlations():
 
 def test_all_card_correlations_empty_runs():
     assert calculate_all_card_correlations([]) == {}
+
+def test_card_acquisition_timing_statistics_empty_runs():
+    result = calculate_card_acquisition_timing_statistics([])
+
+    assert result == {}
+
+
+def test_card_acquisition_timing_statistics_winning_run():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.A",
+                floor=7,
+            ),
+        ],
+    )
+
+    result = calculate_card_acquisition_timing_statistics([run])
+
+    stats = result["CARD.A"]
+
+    assert stats.winning_runs == 1
+    assert stats.losing_runs == 0
+    assert stats.average_winning_acquisition_floor == 7
+    assert stats.average_losing_acquisition_floor is None
+    assert stats.average_acquisition_floor_difference is None
+
+
+def test_card_acquisition_timing_statistics_losing_run():
+    run = make_run(
+        victory=False,
+        card_acquisitions=[
+            make_acquisition(
+                "CARD.A",
+                floor=12,
+            ),
+        ],
+    )
+
+    result = calculate_card_acquisition_timing_statistics([run])
+
+    stats = result["CARD.A"]
+
+    assert stats.winning_runs == 0
+    assert stats.losing_runs == 1
+    assert stats.average_winning_acquisition_floor is None
+    assert stats.average_losing_acquisition_floor == 12
+    assert stats.average_acquisition_floor_difference is None
+
+
+def test_card_acquisition_timing_statistics_compares_winning_and_losing_runs():
+    runs = [
+        make_run(
+            victory=True,
+            card_acquisitions=[
+                make_acquisition("CARD.A", floor=6),
+            ],
+        ),
+        make_run(
+            victory=True,
+            card_acquisitions=[
+                make_acquisition("CARD.A", floor=10),
+            ],
+        ),
+        make_run(
+            victory=False,
+            card_acquisitions=[
+                make_acquisition("CARD.A", floor=12),
+            ],
+        ),
+        make_run(
+            victory=False,
+            card_acquisitions=[
+                make_acquisition("CARD.A", floor=16),
+            ],
+        ),
+    ]
+
+    result = calculate_card_acquisition_timing_statistics(runs)
+
+    stats = result["CARD.A"]
+
+    assert stats.winning_runs == 2
+    assert stats.losing_runs == 2
+
+    assert stats.average_winning_acquisition_floor == 8
+    assert stats.average_losing_acquisition_floor == 14
+
+    assert stats.average_acquisition_floor_difference == -6
+
+
+def test_card_acquisition_timing_statistics_only_uses_first_copy():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition("CARD.A", floor=5),
+            make_acquisition("CARD.A", floor=12),
+            make_acquisition("CARD.A", floor=20),
+        ],
+    )
+
+    result = calculate_card_acquisition_timing_statistics([run])
+
+    stats = result["CARD.A"]
+
+    assert stats.winning_runs == 1
+    assert stats.losing_runs == 0
+    assert stats.average_winning_acquisition_floor == 5
+
+
+def test_card_acquisition_timing_statistics_keeps_cards_independent():
+    run = make_run(
+        victory=True,
+        card_acquisitions=[
+            make_acquisition("CARD.A", floor=5),
+            make_acquisition("CARD.B", floor=15),
+        ],
+    )
+
+    result = calculate_card_acquisition_timing_statistics([run])
+
+    assert result["CARD.A"].average_winning_acquisition_floor == 5
+    assert result["CARD.B"].average_winning_acquisition_floor == 15
