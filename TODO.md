@@ -69,6 +69,10 @@
 - [ ] Card encounter-performance analysis
 - [ ] Card performance against specific elites
 - [ ] Card performance against specific bosses
+- [ ] Card → run observed win-rate analysis
+- [ ] Card → run analysis by acquisition timing
+- [ ] Card → run analysis by character / ascension / act
+- [ ] Card → card correlation analysis
 - [ ] Advanced card analysis
 
 ### Event Analysis
@@ -135,6 +139,8 @@
 - [ ] Event outcomes
 - [ ] Encounter win rates
 - [ ] Item performance against encounters
+- [ ] Card win-rate comparison (with card vs without card)
+- [ ] Card correlation visualisation
 
 ## Phase 7 - Polish
 - [ ] Remember last run directory
@@ -156,5 +162,7 @@
 - [x] Relic parser tests
 - [x] Relic analysis tests
 - [x] Combat analysis tests
+- [ ] Card analysis tests
+- [ ] Card correlation tests
 - [ ] GUI integration tests
 - [ ] Expand edge-case coverage

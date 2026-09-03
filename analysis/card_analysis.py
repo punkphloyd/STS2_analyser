@@ -4,6 +4,29 @@ from data_models.run_data import RunData
 from analysis.card_state import reconstruct_card_states
 
 @dataclass(slots=True)
+class CardCorrelationStatistics:
+    runs_with_card: int
+    wins_with_card: int
+    win_rate_with_card: float | None
+
+    runs_without_card: int
+    wins_without_card: int
+    win_rate_without_card: float | None
+
+    @property
+    def win_rate_difference(self) -> float | None:
+        if (
+            self.win_rate_with_card is None
+            or self.win_rate_without_card is None
+        ):
+            return None
+
+        return (
+            self.win_rate_with_card
+            - self.win_rate_without_card
+        )
+
+@dataclass(slots=True)
 class CardFinalCopyCountStatistics:
     card: str
     copy_count: int
@@ -490,3 +513,65 @@ def calculate_card_final_copy_count_statistics(
                 result.losses += 1
 
     return statistics
+
+def calculate_card_correlation(
+    card: str,
+    runs: list[RunData],
+) -> CardCorrelationStatistics:
+    runs_with_card = 0
+    wins_with_card = 0
+    runs_without_card = 0
+    wins_without_card = 0
+
+    for run in runs:
+        has_card = any(
+            acquisition.card == card
+            for acquisition in run.card_acquisitions
+        )
+
+        if has_card:
+            runs_with_card += 1
+
+            if run.metadata.victory:
+                wins_with_card += 1
+        else:
+            runs_without_card += 1
+
+            if run.metadata.victory:
+                wins_without_card += 1
+
+    win_rate_with_card = (
+        wins_with_card / runs_with_card
+        if runs_with_card > 0
+        else None
+    )
+
+    win_rate_without_card = (
+        wins_without_card / runs_without_card
+        if runs_without_card > 0
+        else None
+    )
+
+    return CardCorrelationStatistics(
+        runs_with_card=runs_with_card,
+        wins_with_card=wins_with_card,
+        win_rate_with_card=win_rate_with_card,
+        runs_without_card=runs_without_card,
+        wins_without_card=wins_without_card,
+        win_rate_without_card=win_rate_without_card,
+    )
+
+
+def calculate_all_card_correlations(
+    runs: list[RunData],
+) -> dict[str, CardCorrelationStatistics]:
+    cards = {
+        acquisition.card
+        for run in runs
+        for acquisition in run.card_acquisitions
+    }
+
+    return {
+        card: calculate_card_correlation(card, runs)
+        for card in cards
+    }

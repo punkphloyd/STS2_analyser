@@ -14,6 +14,8 @@ from analysis.card_analysis import (
     calculate_card_final_copy_count_statistics,
     calculate_card_skip_statistics,
     calculate_card_statistics,
+    calculate_card_correlation,
+    calculate_all_card_correlations
 )
 from data_models.card_acquisition import CardAcquisition
 from data_models.card_reward import CardReward
@@ -1033,3 +1035,144 @@ def test_card_final_copy_count_statistics_real_run():
         wins=0,
         losses=1,
     )
+
+def test_card_correlation_counts_runs_with_and_without_card():
+    runs = [
+        make_run(
+            victory=True,
+            card_acquisitions=[make_acquisition("CARD.A")],
+        ),
+        make_run(
+            victory=False,
+            card_acquisitions=[make_acquisition("CARD.A")],
+        ),
+        make_run(victory=True),
+        make_run(victory=False),
+    ]
+
+    result = calculate_card_correlation("CARD.A", runs)
+
+    assert result.runs_with_card == 2
+    assert result.wins_with_card == 1
+    assert result.win_rate_with_card == 0.5
+
+    assert result.runs_without_card == 2
+    assert result.wins_without_card == 1
+    assert result.win_rate_without_card == 0.5
+
+def test_card_correlation_counts_run_once_when_card_has_multiple_copies():
+    runs = [
+        make_run(
+            victory=True,
+            card_acquisitions=[
+                make_acquisition("CARD.A"),
+                make_acquisition("CARD.A"),
+            ],
+        ),
+        make_run(victory=False),
+    ]
+
+    result = calculate_card_correlation("CARD.A", runs)
+
+    assert result.runs_with_card == 1
+    assert result.wins_with_card == 1
+    assert result.runs_without_card == 1
+    assert result.wins_without_card == 0
+
+def test_card_correlation_returns_none_when_no_runs_contain_card():
+    runs = [
+        make_run(victory=True),
+        make_run(victory=False),
+    ]
+
+    result = calculate_card_correlation("CARD.A", runs)
+
+    assert result.win_rate_with_card is None
+    assert result.win_rate_without_card == 0.5
+
+def test_card_correlation_returns_none_when_all_runs_contain_card():
+    runs = [
+        make_run(
+            victory=True,
+            card_acquisitions=[make_acquisition("CARD.A")],
+        ),
+        make_run(
+            victory=False,
+            card_acquisitions=[make_acquisition("CARD.A")],
+        ),
+    ]
+
+    result = calculate_card_correlation("CARD.A", runs)
+
+    assert result.win_rate_with_card == 0.5
+    assert result.win_rate_without_card is None
+
+def test_card_correlation_win_rate_difference():
+    runs = [
+        make_run(
+            victory=True,
+            card_acquisitions=[make_acquisition("CARD.A")],
+        ),
+        make_run(
+            victory=True,
+            card_acquisitions=[make_acquisition("CARD.A")],
+        ),
+        make_run(
+            victory=False,
+            card_acquisitions=[make_acquisition("CARD.A")],
+        ),
+        make_run(victory=False),
+        make_run(victory=False),
+        make_run(victory=True),
+    ]
+
+    result = calculate_card_correlation("CARD.A", runs)
+
+    assert result.win_rate_with_card == 2 / 3
+    assert result.win_rate_without_card == 1 / 3
+    assert result.win_rate_difference == 1 / 3
+
+
+def test_all_card_correlations():
+    runs = [
+        make_run(
+            victory=True,
+            card_acquisitions=[
+                make_acquisition("CARD.A"),
+            ],
+        ),
+        make_run(
+            victory=False,
+            card_acquisitions=[
+                make_acquisition("CARD.A"),
+                make_acquisition("CARD.B"),
+            ],
+        ),
+        make_run(
+            victory=True,
+            card_acquisitions=[
+                make_acquisition("CARD.B"),
+            ],
+        ),
+        make_run(victory=False),
+    ]
+
+    result = calculate_all_card_correlations(runs)
+
+    assert set(result) == {
+        "CARD.A",
+        "CARD.B",
+    }
+
+    assert result["CARD.A"].runs_with_card == 2
+    assert result["CARD.A"].wins_with_card == 1
+    assert result["CARD.A"].runs_without_card == 2
+    assert result["CARD.A"].wins_without_card == 1
+
+    assert result["CARD.B"].runs_with_card == 2
+    assert result["CARD.B"].wins_with_card == 1
+    assert result["CARD.B"].runs_without_card == 2
+    assert result["CARD.B"].wins_without_card == 1
+
+def test_all_card_correlations_empty_runs():
+    assert calculate_all_card_correlations([]) == {}
