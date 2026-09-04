@@ -3,32 +3,25 @@ from pathlib import Path
 
 from analysis.card_analysis import (
     CardAcquisitionSourceStatistics,
-    CardChoiceStatistics,
     CardCopyCountStatistics,
     CardFinalCopyCountStatistics,
-    CardSkipStatistics,
-    CardStatistics,
     calculate_card_acquisition_source_statistics,
+    calculate_card_acquisition_timing_statistics,
     calculate_card_choice_statistics,
     calculate_card_copy_count_statistics,
     calculate_card_final_copy_count_statistics,
     calculate_card_skip_statistics,
     calculate_card_statistics,
-    calculate_card_correlation,
-    calculate_all_card_correlations,
-    CardAcquisitionTimingStatistics,
-    calculate_card_acquisition_timing_statistics,
 )
+
 from data_models.card_acquisition import CardAcquisition
 from data_models.card_reward import CardReward
+from data_models.card_transformation import CardTransformation
 from data_models.run_data import RunData
 from data_models.run_metadata import RunMetadata
 from parsers.run_parser import parse_run
-from analysis.card_analysis import (
-    CardAcquisitionSourceStatistics,
-    calculate_card_acquisition_source_statistics,
-)
-from data_models.card_transformation import CardTransformation
+
+
 EXAMPLE_RUNFILES = Path("example_runfiles")
 
 
@@ -68,7 +61,6 @@ def make_run(
         ),
     )
 
-
 def make_reward(
     *,
     offered_cards: list[str],
@@ -85,7 +77,6 @@ def make_reward(
         picked_cards=picked_cards,
     )
 
-
 def make_acquisition(
     card: str,
     floor: int = 1,
@@ -98,7 +89,6 @@ def make_acquisition(
         floor=floor,
         act_floor=floor,
     )
-
 
 def test_card_choice_statistics():
     runs = [
@@ -152,10 +142,8 @@ def test_card_choice_statistics():
     assert result["CARD.C"].wins == 0
     assert result["CARD.C"].win_rate is None
 
-
 def test_card_choice_statistics_empty_runs():
     assert calculate_card_choice_statistics([]) == {}
-
 
 def test_card_statistics_counts_a_card_once_per_run():
     runs = [
@@ -179,7 +167,6 @@ def test_card_statistics_counts_a_card_once_per_run():
     assert result["CARD.A"].runs_acquired == 2
     assert result["CARD.A"].wins == 1
     assert result["CARD.A"].win_rate == 0.5
-
 
 def test_card_statistics_distinguishes_cards():
     runs = [
@@ -208,10 +195,8 @@ def test_card_statistics_distinguishes_cards():
     assert result["CARD.B"].wins == 1
     assert result["CARD.B"].win_rate == 1.0
 
-
 def test_card_statistics_empty_runs():
     assert calculate_card_statistics([]) == {}
-
 
 def test_card_skip_statistics():
     runs = [
@@ -277,7 +262,6 @@ def test_card_skip_statistics():
     assert result.losing_skips == 1
     assert result.losing_skip_rate == 0.5
 
-
 def test_card_skip_statistics_all_rewards_picked():
     runs = [
         make_run(
@@ -319,7 +303,6 @@ def test_card_skip_statistics_all_rewards_picked():
     assert result.losing_skips == 0
     assert result.losing_skip_rate is None
 
-
 def test_card_skip_statistics_all_rewards_skipped():
     runs = [
         make_run(
@@ -357,7 +340,6 @@ def test_card_skip_statistics_all_rewards_skipped():
     assert result.losing_skips == 2
     assert result.losing_skip_rate == 1.0
 
-
 def test_card_skip_statistics_empty_runs():
     result = calculate_card_skip_statistics([])
 
@@ -373,7 +355,6 @@ def test_card_skip_statistics_empty_runs():
     assert result.losing_skips == 0
     assert result.losing_skip_rate is None
 
-
 def test_real_run_card_choice_statistics():
     path = EXAMPLE_RUNFILES / "1780143874.run"
 
@@ -386,7 +367,6 @@ def test_real_run_card_choice_statistics():
     assert cloak.offered == 1
     assert cloak.picks == 1
     assert cloak.pick_rate == 1.0
-
 
 def test_real_run_skipped_reward_is_counted():
     path = EXAMPLE_RUNFILES / "1780143874.run"
@@ -405,7 +385,6 @@ def test_real_run_skipped_reward_is_counted():
 
     assert result.skipped >= 1
     assert result.rewards >= result.skipped
-
 
 def test_real_run_card_acquisition_statistics():
     path = EXAMPLE_RUNFILES / "1780143874.run"
@@ -432,7 +411,6 @@ def test_card_acquisition_source_statistics_empty_runs():
 
     assert result == {}
 
-
 def test_card_acquisition_source_statistics_single_acquisition():
     run = make_run(
         victory=True,
@@ -458,7 +436,6 @@ def test_card_acquisition_source_statistics_single_acquisition():
             ),
         },
     }
-
 
 def test_card_acquisition_source_statistics_multiple_copies_same_source():
     run = make_run(
@@ -489,7 +466,6 @@ def test_card_acquisition_source_statistics_multiple_copies_same_source():
     assert stats.runs_acquired == 1
     assert stats.wins == 1
     assert stats.win_rate == 1.0
-
 
 def test_card_acquisition_source_statistics_same_card_multiple_sources():
     run = make_run(
@@ -527,7 +503,6 @@ def test_card_acquisition_source_statistics_same_card_multiple_sources():
         runs_acquired=1,
         wins=1,
     )
-
 
 def test_card_acquisition_source_statistics_multiple_runs():
     winning_run = make_run(
@@ -568,7 +543,6 @@ def test_card_acquisition_source_statistics_multiple_runs():
     assert stats.wins == 1
     assert stats.win_rate == 0.5
 
-
 def test_card_acquisition_source_statistics_multiple_copies_count_one_win():
     run = make_run(
         victory=True,
@@ -602,7 +576,6 @@ def test_card_acquisition_source_statistics_multiple_copies_count_one_win():
     assert stats.acquisitions == 3
     assert stats.runs_acquired == 1
     assert stats.wins == 1
-
 
 def test_card_acquisition_source_statistics_same_card_source_across_runs():
     first_run = make_run(
@@ -648,7 +621,6 @@ def test_card_acquisition_source_statistics_same_card_source_across_runs():
     assert stats.wins == 1
     assert stats.win_rate == 0.5
 
-
 def test_card_acquisition_source_statistics_keeps_cards_independent():
     run = make_run(
         victory=True,
@@ -683,12 +655,10 @@ def test_card_acquisition_source_statistics_keeps_cards_independent():
         "CARD.DEADLY_POISON"
     ]["shop"].acquisitions == 1
 
-
 def test_card_copy_count_statistics_empty_runs():
     result = calculate_card_copy_count_statistics([])
 
     assert result == {}
-
 
 def test_card_copy_count_statistics_one_copy():
     run = make_run(
@@ -712,7 +682,6 @@ def test_card_copy_count_statistics_one_copy():
             ),
         },
     }
-
 
 def test_card_copy_count_statistics_two_copies():
     run = make_run(
@@ -741,7 +710,6 @@ def test_card_copy_count_statistics_two_copies():
             ),
         },
     }
-
 
 def test_card_copy_count_statistics_multiple_runs_same_copy_count():
     winning_run = make_run(
@@ -780,7 +748,6 @@ def test_card_copy_count_statistics_multiple_runs_same_copy_count():
     assert stats.runs == 2
     assert stats.wins == 1
     assert stats.win_rate == 0.5
-
 
 def test_card_copy_count_statistics_separates_copy_counts():
     one_copy_run = make_run(
@@ -831,7 +798,6 @@ def test_card_copy_count_statistics_separates_copy_counts():
         wins=0,
     )
 
-
 def test_card_copy_count_statistics_three_copies():
     run = make_run(
         victory=False,
@@ -863,7 +829,6 @@ def test_card_copy_count_statistics_three_copies():
     assert stats.runs == 1
     assert stats.wins == 0
     assert stats.win_rate == 0.0
-
 
 def test_card_copy_count_statistics_multiple_cards():
     run = make_run(
@@ -903,7 +868,6 @@ def test_card_copy_count_statistics_multiple_cards():
         wins=1,
     )
 
-
 def test_card_copy_count_statistics_counts_copies_regardless_of_source():
     run = make_run(
         victory=True,
@@ -935,7 +899,6 @@ def test_card_copy_count_statistics_counts_copies_regardless_of_source():
     assert result[
         "CARD.CLOAK_AND_DAGGER"
     ][3].runs == 1
-
 
 def test_card_copy_count_statistics_one_run_only_contributes_once():
     run = make_run(
@@ -1038,152 +1001,10 @@ def test_card_final_copy_count_statistics_real_run():
         losses=1,
     )
 
-def test_card_correlation_counts_runs_with_and_without_card():
-    runs = [
-        make_run(
-            victory=True,
-            card_acquisitions=[make_acquisition("CARD.A")],
-        ),
-        make_run(
-            victory=False,
-            card_acquisitions=[make_acquisition("CARD.A")],
-        ),
-        make_run(victory=True),
-        make_run(victory=False),
-    ]
-
-    result = calculate_card_correlation("CARD.A", runs)
-
-    assert result.runs_with_card == 2
-    assert result.wins_with_card == 1
-    assert result.win_rate_with_card == 0.5
-
-    assert result.runs_without_card == 2
-    assert result.wins_without_card == 1
-    assert result.win_rate_without_card == 0.5
-
-def test_card_correlation_counts_run_once_when_card_has_multiple_copies():
-    runs = [
-        make_run(
-            victory=True,
-            card_acquisitions=[
-                make_acquisition("CARD.A"),
-                make_acquisition("CARD.A"),
-            ],
-        ),
-        make_run(victory=False),
-    ]
-
-    result = calculate_card_correlation("CARD.A", runs)
-
-    assert result.runs_with_card == 1
-    assert result.wins_with_card == 1
-    assert result.runs_without_card == 1
-    assert result.wins_without_card == 0
-
-def test_card_correlation_returns_none_when_no_runs_contain_card():
-    runs = [
-        make_run(victory=True),
-        make_run(victory=False),
-    ]
-
-    result = calculate_card_correlation("CARD.A", runs)
-
-    assert result.win_rate_with_card is None
-    assert result.win_rate_without_card == 0.5
-
-def test_card_correlation_returns_none_when_all_runs_contain_card():
-    runs = [
-        make_run(
-            victory=True,
-            card_acquisitions=[make_acquisition("CARD.A")],
-        ),
-        make_run(
-            victory=False,
-            card_acquisitions=[make_acquisition("CARD.A")],
-        ),
-    ]
-
-    result = calculate_card_correlation("CARD.A", runs)
-
-    assert result.win_rate_with_card == 0.5
-    assert result.win_rate_without_card is None
-
-def test_card_correlation_win_rate_difference():
-    runs = [
-        make_run(
-            victory=True,
-            card_acquisitions=[make_acquisition("CARD.A")],
-        ),
-        make_run(
-            victory=True,
-            card_acquisitions=[make_acquisition("CARD.A")],
-        ),
-        make_run(
-            victory=False,
-            card_acquisitions=[make_acquisition("CARD.A")],
-        ),
-        make_run(victory=False),
-        make_run(victory=False),
-        make_run(victory=True),
-    ]
-
-    result = calculate_card_correlation("CARD.A", runs)
-
-    assert result.win_rate_with_card == 2 / 3
-    assert result.win_rate_without_card == 1 / 3
-    assert result.win_rate_difference == 1 / 3
-
-
-def test_all_card_correlations():
-    runs = [
-        make_run(
-            victory=True,
-            card_acquisitions=[
-                make_acquisition("CARD.A"),
-            ],
-        ),
-        make_run(
-            victory=False,
-            card_acquisitions=[
-                make_acquisition("CARD.A"),
-                make_acquisition("CARD.B"),
-            ],
-        ),
-        make_run(
-            victory=True,
-            card_acquisitions=[
-                make_acquisition("CARD.B"),
-            ],
-        ),
-        make_run(victory=False),
-    ]
-
-    result = calculate_all_card_correlations(runs)
-
-    assert set(result) == {
-        "CARD.A",
-        "CARD.B",
-    }
-
-    assert result["CARD.A"].runs_with_card == 2
-    assert result["CARD.A"].wins_with_card == 1
-    assert result["CARD.A"].runs_without_card == 2
-    assert result["CARD.A"].wins_without_card == 1
-
-    assert result["CARD.B"].runs_with_card == 2
-    assert result["CARD.B"].wins_with_card == 1
-    assert result["CARD.B"].runs_without_card == 2
-    assert result["CARD.B"].wins_without_card == 1
-
-def test_all_card_correlations_empty_runs():
-    assert calculate_all_card_correlations([]) == {}
-
 def test_card_acquisition_timing_statistics_empty_runs():
     result = calculate_card_acquisition_timing_statistics([])
 
     assert result == {}
-
 
 def test_card_acquisition_timing_statistics_winning_run():
     run = make_run(
@@ -1206,7 +1027,6 @@ def test_card_acquisition_timing_statistics_winning_run():
     assert stats.average_losing_acquisition_floor is None
     assert stats.average_acquisition_floor_difference is None
 
-
 def test_card_acquisition_timing_statistics_losing_run():
     run = make_run(
         victory=False,
@@ -1227,7 +1047,6 @@ def test_card_acquisition_timing_statistics_losing_run():
     assert stats.average_winning_acquisition_floor is None
     assert stats.average_losing_acquisition_floor == 12
     assert stats.average_acquisition_floor_difference is None
-
 
 def test_card_acquisition_timing_statistics_compares_winning_and_losing_runs():
     runs = [
@@ -1269,7 +1088,6 @@ def test_card_acquisition_timing_statistics_compares_winning_and_losing_runs():
 
     assert stats.average_acquisition_floor_difference == -6
 
-
 def test_card_acquisition_timing_statistics_only_uses_first_copy():
     run = make_run(
         victory=True,
@@ -1287,7 +1105,6 @@ def test_card_acquisition_timing_statistics_only_uses_first_copy():
     assert stats.winning_runs == 1
     assert stats.losing_runs == 0
     assert stats.average_winning_acquisition_floor == 5
-
 
 def test_card_acquisition_timing_statistics_keeps_cards_independent():
     run = make_run(

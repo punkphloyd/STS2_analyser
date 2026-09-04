@@ -3,6 +3,32 @@ from dataclasses import dataclass
 from data_models.run_data import RunData
 from analysis.card_state import reconstruct_card_states
 
+
+@dataclass(slots=True)
+class CardChoiceContextStatistics:
+    """
+    Statistics for a card being offered alongside another card.
+
+    Each offer containing both cards contributes one observation
+    to the pair.
+
+    picked counts the number of times the primary card was picked
+    when the competing card was also offered.
+    """
+
+    offered: int = 0
+    picked: int = 0
+
+    @property
+    def pick_rate(self) -> float | None:
+        """Return the rate at which the primary card was picked."""
+
+        if self.offered == 0:
+            return None
+
+        return self.picked / self.offered
+
+
 @dataclass
 class CardAcquisitionTimingStatistics:
     card: str
@@ -15,13 +41,21 @@ class CardAcquisitionTimingStatistics:
     def average_winning_acquisition_floor(self) -> float | None:
         if self.winning_runs == 0:
             return None
-        return self.total_winning_acquisition_floors / self.winning_runs
+
+        return (
+            self.total_winning_acquisition_floors
+            / self.winning_runs
+        )
 
     @property
     def average_losing_acquisition_floor(self) -> float | None:
         if self.losing_runs == 0:
             return None
-        return self.total_losing_acquisition_floors / self.losing_runs
+
+        return (
+            self.total_losing_acquisition_floors
+            / self.losing_runs
+        )
 
     @property
     def average_acquisition_floor_difference(self) -> float | None:
@@ -33,28 +67,6 @@ class CardAcquisitionTimingStatistics:
 
         return winning - losing
 
-@dataclass(slots=True)
-class CardCorrelationStatistics:
-    runs_with_card: int
-    wins_with_card: int
-    win_rate_with_card: float | None
-
-    runs_without_card: int
-    wins_without_card: int
-    win_rate_without_card: float | None
-
-    @property
-    def win_rate_difference(self) -> float | None:
-        if (
-            self.win_rate_with_card is None
-            or self.win_rate_without_card is None
-        ):
-            return None
-
-        return (
-            self.win_rate_with_card
-            - self.win_rate_without_card
-        )
 
 @dataclass(slots=True)
 class CardFinalCopyCountStatistics:
@@ -70,6 +82,7 @@ class CardFinalCopyCountStatistics:
             return 0.0
 
         return self.wins / self.runs
+
 
 @dataclass(slots=True)
 class CardChoiceStatistics:
@@ -448,16 +461,6 @@ def calculate_card_copy_count_statistics(
 
     The result is keyed first by card ID and then by the exact
     number of copies acquired.
-
-    For example:
-
-        {
-            "CARD.CLOAK_AND_DAGGER": {
-                1: CardCopyCountStatistics(...),
-                2: CardCopyCountStatistics(...),
-                3: CardCopyCountStatistics(...),
-            }
-        }
     """
 
     if not runs:
@@ -483,9 +486,7 @@ def calculate_card_copy_count_statistics(
                 {},
             )
 
-            statistics = card_statistics.get(
-                copy_count
-            )
+            statistics = card_statistics.get(copy_count)
 
             if statistics is None:
                 statistics = CardCopyCountStatistics(
@@ -500,6 +501,7 @@ def calculate_card_copy_count_statistics(
                 statistics.wins += 1
 
     return result
+
 
 def calculate_card_final_copy_count_statistics(
     runs: list[RunData],
@@ -544,67 +546,6 @@ def calculate_card_final_copy_count_statistics(
 
     return statistics
 
-def calculate_card_correlation(
-    card: str,
-    runs: list[RunData],
-) -> CardCorrelationStatistics:
-    runs_with_card = 0
-    wins_with_card = 0
-    runs_without_card = 0
-    wins_without_card = 0
-
-    for run in runs:
-        has_card = any(
-            acquisition.card == card
-            for acquisition in run.card_acquisitions
-        )
-
-        if has_card:
-            runs_with_card += 1
-
-            if run.metadata.victory:
-                wins_with_card += 1
-        else:
-            runs_without_card += 1
-
-            if run.metadata.victory:
-                wins_without_card += 1
-
-    win_rate_with_card = (
-        wins_with_card / runs_with_card
-        if runs_with_card > 0
-        else None
-    )
-
-    win_rate_without_card = (
-        wins_without_card / runs_without_card
-        if runs_without_card > 0
-        else None
-    )
-
-    return CardCorrelationStatistics(
-        runs_with_card=runs_with_card,
-        wins_with_card=wins_with_card,
-        win_rate_with_card=win_rate_with_card,
-        runs_without_card=runs_without_card,
-        wins_without_card=wins_without_card,
-        win_rate_without_card=win_rate_without_card,
-    )
-
-
-def calculate_all_card_correlations(
-    runs: list[RunData],
-) -> dict[str, CardCorrelationStatistics]:
-    cards = {
-        acquisition.card
-        for run in runs
-        for acquisition in run.card_acquisitions
-    }
-
-    return {
-        card: calculate_card_correlation(card, runs)
-        for card in cards
-    }
 
 def calculate_card_acquisition_timing_statistics(
     runs: list[RunData],
@@ -634,5 +575,62 @@ def calculate_card_acquisition_timing_statistics(
             else:
                 stats.losing_runs += 1
                 stats.total_losing_acquisition_floors += floor
+
+    return statistics
+
+
+def calculate_card_choice_context_statistics(
+    runs: list[RunData],
+) -> dict[str, dict[str, CardChoiceContextStatistics]]:
+    """
+    Calculate pairwise choice-context statistics.
+
+    For every card reward, each offered card is compared with every
+    other card offered in the same reward.
+
+    The result is keyed first by the primary card and then by the
+    competing card.
+
+    The relationship is directional:
+
+        CARD.A -> CARD.B
+
+    means "how often was CARD.A picked when CARD.B was also offered."
+
+    Therefore CARD.B -> CARD.A may have different statistics.
+    """
+
+    if not runs:
+        return {}
+
+    statistics: dict[
+        str,
+        dict[str, CardChoiceContextStatistics],
+    ] = {}
+
+    for run in runs:
+        for reward in run.card_rewards:
+            offered_cards = list(dict.fromkeys(reward.offered_cards))
+            picked_cards = set(reward.picked_cards)
+
+            for card in offered_cards:
+                for competing_card in offered_cards:
+                    if card == competing_card:
+                        continue
+
+                    if card not in statistics:
+                        statistics[card] = {}
+
+                    if competing_card not in statistics[card]:
+                        statistics[card][competing_card] = (
+                            CardChoiceContextStatistics()
+                        )
+
+                    stats = statistics[card][competing_card]
+
+                    stats.offered += 1
+
+                    if card in picked_cards:
+                        stats.picked += 1
 
     return statistics
