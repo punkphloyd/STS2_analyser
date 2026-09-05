@@ -1151,3 +1151,175 @@ def test_card_choice_context_outcome_rates_handle_zero_counts():
     assert stat.pick_win_rate is None
     assert stat.skip_win_rate is None
     assert stat.win_rate_difference is None
+
+def test_card_choice_context_offers_equal_picks_plus_skips():
+    runs = [
+        make_run(
+            victory=True,
+            card_rewards=[
+                make_reward(
+                    offered_cards=["CARD.A", "CARD.B"],
+                    picked_cards=["CARD.A"],
+                ),
+            ],
+        ),
+        make_run(
+            victory=False,
+            card_rewards=[
+                make_reward(
+                    offered_cards=["CARD.A", "CARD.B"],
+                    picked_cards=[],
+                ),
+            ],
+        ),
+    ]
+
+    stat = calculate_card_choice_context_statistics(runs)["CARD.A"]["CARD.B"]
+
+    assert stat.offered == stat.picked + stat.skipped
+
+
+def test_card_choice_context_pick_and_skip_rates_sum_to_one():
+    runs = [
+        make_run(
+            victory=True,
+            card_rewards=[
+                make_reward(
+                    offered_cards=["CARD.A", "CARD.B"],
+                    picked_cards=["CARD.A"],
+                ),
+            ],
+        ),
+        make_run(
+            victory=False,
+            card_rewards=[
+                make_reward(
+                    offered_cards=["CARD.A", "CARD.B"],
+                    picked_cards=[],
+                ),
+            ],
+        ),
+    ]
+
+    stat = calculate_card_choice_context_statistics(runs)["CARD.A"]["CARD.B"]
+
+    assert stat.pick_rate == 0.5
+    assert stat.skip_rate == 0.5
+    assert stat.pick_rate + stat.skip_rate == 1.0
+
+
+def test_card_choice_context_only_picks():
+    runs = [
+        make_run(
+            victory=True,
+            card_rewards=[
+                make_reward(
+                    offered_cards=["CARD.A", "CARD.B"],
+                    picked_cards=["CARD.A"],
+                ),
+            ],
+        ),
+        make_run(
+            victory=False,
+            card_rewards=[
+                make_reward(
+                    offered_cards=["CARD.A", "CARD.B"],
+                    picked_cards=["CARD.A"],
+                ),
+            ],
+        ),
+    ]
+
+    stat = calculate_card_choice_context_statistics(runs)["CARD.A"]["CARD.B"]
+
+    assert stat.picked == 2
+    assert stat.skipped == 0
+    assert stat.pick_win_rate == 0.5
+    assert stat.skip_win_rate is None
+
+def test_card_choice_context_only_skips():
+    runs = [
+        make_run(
+            victory=True,
+            card_rewards=[
+                make_reward(
+                    offered_cards=["CARD.A", "CARD.B"],
+                    picked_cards=["CARD.B"],
+                ),
+            ],
+        ),
+        make_run(
+            victory=False,
+            card_rewards=[
+                make_reward(
+                    offered_cards=["CARD.A", "CARD.B"],
+                    picked_cards=["CARD.B"],
+                ),
+            ],
+        ),
+    ]
+
+    stat = calculate_card_choice_context_statistics(runs)["CARD.A"]["CARD.B"]
+
+    assert stat.picked == 0
+    assert stat.skipped == 2
+    assert stat.pick_win_rate is None
+    assert stat.skip_win_rate == 0.5
+
+def test_card_choice_context_primary_card_pick_records_win():
+    run = make_run(
+        victory=True,
+        card_rewards=[
+            make_reward(
+                offered_cards=["CARD.A", "CARD.B"],
+                picked_cards=["CARD.A"],
+            ),
+        ],
+    )
+
+    stat = calculate_card_choice_context_statistics([run])["CARD.A"]["CARD.B"]
+
+    assert stat.offered == 1
+    assert stat.picked == 1
+    assert stat.skipped == 0
+    assert stat.wins_when_picked == 1
+    assert stat.wins_when_skipped == 0
+
+
+def test_card_choice_context_competing_card_pick_records_skip():
+    run = make_run(
+        victory=True,
+        card_rewards=[
+            make_reward(
+                offered_cards=["CARD.A", "CARD.B"],
+                picked_cards=["CARD.B"],
+            ),
+        ],
+    )
+
+    stat = calculate_card_choice_context_statistics([run])["CARD.A"]["CARD.B"]
+
+    assert stat.offered == 1
+    assert stat.picked == 0
+    assert stat.skipped == 1
+    assert stat.wins_when_picked == 0
+    assert stat.wins_when_skipped == 1
+
+def test_card_choice_context_completely_skipped_reward():
+    run = make_run(
+        victory=False,
+        card_rewards=[
+            make_reward(
+                offered_cards=["CARD.A", "CARD.B"],
+                picked_cards=[],
+            ),
+        ],
+    )
+
+    stat = calculate_card_choice_context_statistics([run])["CARD.A"]["CARD.B"]
+
+    assert stat.offered == 1
+    assert stat.picked == 0
+    assert stat.skipped == 1
+    assert stat.wins_when_skipped == 0
+    assert stat.skip_win_rate == 0.0
