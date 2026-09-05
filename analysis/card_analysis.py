@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from collections.abc import Iterable
 
 from data_models.run_data import RunData
 from analysis.card_state import reconstruct_card_states
@@ -6,28 +7,45 @@ from analysis.card_state import reconstruct_card_states
 
 @dataclass(slots=True)
 class CardChoiceContextStatistics:
-    """
-    Statistics for a card being offered alongside another card.
-
-    Each offer containing both cards contributes one observation
-    to the pair.
-
-    picked counts the number of times the primary card was picked
-    when the competing card was also offered.
-    """
-
     offered: int = 0
     picked: int = 0
+    skipped: int = 0
+    wins_when_picked: int = 0
+    wins_when_skipped: int = 0
 
     @property
     def pick_rate(self) -> float | None:
-        """Return the rate at which the primary card was picked."""
-
         if self.offered == 0:
             return None
-
         return self.picked / self.offered
 
+    @property
+    def skip_rate(self) -> float | None:
+        if self.offered == 0:
+            return None
+        return self.skipped / self.offered
+
+    @property
+    def pick_win_rate(self) -> float | None:
+        if self.picked == 0:
+            return None
+        return self.wins_when_picked / self.picked
+
+    @property
+    def skip_win_rate(self) -> float | None:
+        if self.skipped == 0:
+            return None
+        return self.wins_when_skipped / self.skipped
+
+    @property
+    def win_rate_difference(self) -> float | None:
+        pick_rate = self.pick_win_rate
+        skip_rate = self.skip_win_rate
+
+        if pick_rate is None or skip_rate is None:
+            return None
+
+        return pick_rate - skip_rate
 
 @dataclass
 class CardAcquisitionTimingStatistics:
@@ -578,35 +596,10 @@ def calculate_card_acquisition_timing_statistics(
 
     return statistics
 
-
 def calculate_card_choice_context_statistics(
-    runs: list[RunData],
+    runs: Iterable[RunData],
 ) -> dict[str, dict[str, CardChoiceContextStatistics]]:
-    """
-    Calculate pairwise choice-context statistics.
-
-    For every card reward, each offered card is compared with every
-    other card offered in the same reward.
-
-    The result is keyed first by the primary card and then by the
-    competing card.
-
-    The relationship is directional:
-
-        CARD.A -> CARD.B
-
-    means "how often was CARD.A picked when CARD.B was also offered."
-
-    Therefore CARD.B -> CARD.A may have different statistics.
-    """
-
-    if not runs:
-        return {}
-
-    statistics: dict[
-        str,
-        dict[str, CardChoiceContextStatistics],
-    ] = {}
+    statistics: dict[str, dict[str, CardChoiceContextStatistics]] = {}
 
     for run in runs:
         for reward in run.card_rewards:
@@ -626,11 +619,18 @@ def calculate_card_choice_context_statistics(
                             CardChoiceContextStatistics()
                         )
 
-                    stats = statistics[card][competing_card]
-
-                    stats.offered += 1
+                    stat = statistics[card][competing_card]
+                    stat.offered += 1
 
                     if card in picked_cards:
-                        stats.picked += 1
+                        stat.picked += 1
+
+                        if run.metadata.victory:
+                            stat.wins_when_picked += 1
+                    else:
+                        stat.skipped += 1
+
+                        if run.metadata.victory:
+                            stat.wins_when_skipped += 1
 
     return statistics
