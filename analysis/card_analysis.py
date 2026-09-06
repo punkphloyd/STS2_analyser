@@ -47,43 +47,6 @@ class CardChoiceContextStatistics:
 
         return pick_rate - skip_rate
 
-@dataclass
-class CardAcquisitionTimingStatistics:
-    card: str
-    winning_runs: int = 0
-    losing_runs: int = 0
-    total_winning_acquisition_floors: int = 0
-    total_losing_acquisition_floors: int = 0
-
-    @property
-    def average_winning_acquisition_floor(self) -> float | None:
-        if self.winning_runs == 0:
-            return None
-
-        return (
-            self.total_winning_acquisition_floors
-            / self.winning_runs
-        )
-
-    @property
-    def average_losing_acquisition_floor(self) -> float | None:
-        if self.losing_runs == 0:
-            return None
-
-        return (
-            self.total_losing_acquisition_floors
-            / self.losing_runs
-        )
-
-    @property
-    def average_acquisition_floor_difference(self) -> float | None:
-        winning = self.average_winning_acquisition_floor
-        losing = self.average_losing_acquisition_floor
-
-        if winning is None or losing is None:
-            return None
-
-        return winning - losing
 
 
 @dataclass(slots=True)
@@ -565,36 +528,6 @@ def calculate_card_final_copy_count_statistics(
     return statistics
 
 
-def calculate_card_acquisition_timing_statistics(
-    runs: list[RunData],
-) -> dict[str, CardAcquisitionTimingStatistics]:
-    statistics: dict[str, CardAcquisitionTimingStatistics] = {}
-
-    for run in runs:
-        first_acquisition_by_card: dict[str, int] = {}
-
-        for acquisition in run.card_acquisitions:
-            if acquisition.card not in first_acquisition_by_card:
-                first_acquisition_by_card[acquisition.card] = (
-                    acquisition.floor
-                )
-
-        for card, floor in first_acquisition_by_card.items():
-            if card not in statistics:
-                statistics[card] = CardAcquisitionTimingStatistics(
-                    card=card
-                )
-
-            stats = statistics[card]
-
-            if run.metadata.victory:
-                stats.winning_runs += 1
-                stats.total_winning_acquisition_floors += floor
-            else:
-                stats.losing_runs += 1
-                stats.total_losing_acquisition_floors += floor
-
-    return statistics
 
 def calculate_card_choice_context_statistics(
     runs: Iterable[RunData],

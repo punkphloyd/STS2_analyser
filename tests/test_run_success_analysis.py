@@ -4,6 +4,8 @@ from pathlib import Path
 from analysis.run_success_analysis import (
     FloorWinProbability,
     calculate_conditional_win_probability,
+    calculate_conditional_win_probability_by_character,
+    calculate_conditional_win_probability_by_character_and_ascension,
 )
 from data_models.run_data import RunData
 from data_models.run_metadata import RunMetadata
@@ -13,13 +15,15 @@ def make_run(
     *,
     victory: bool,
     floor_reached: int,
+    character: str = "Silent",
+    ascension: int = 0,
 ) -> RunData:
     return RunData(
         metadata=RunMetadata(
             file_path=Path("test.run"),
             start_time=datetime(2026, 8, 1),
-            character="Silent",
-            ascension=0,
+            character=character,
+            ascension=ascension,
             victory=victory,
             game_version="v0.107.1",
             game_mode="standard",
@@ -148,22 +152,18 @@ def test_conditional_win_probability_mixes_runs_with_different_floor_reached():
 
     result = calculate_conditional_win_probability(runs)
 
-    # All four runs reached floor 3.
     assert result[3].runs_reached == 4
     assert result[3].wins == 2
     assert result[3].win_probability == 0.5
 
-    # Three runs reached floor 5.
     assert result[5].runs_reached == 3
     assert result[5].wins == 2
     assert result[5].win_probability == 2 / 3
 
-    # Two runs reached floor 7.
     assert result[7].runs_reached == 2
     assert result[7].wins == 1
     assert result[7].win_probability == 0.5
 
-    # Only the winning run reached floor 10.
     assert result[10].runs_reached == 1
     assert result[10].wins == 1
     assert result[10].win_probability == 1.0
@@ -190,3 +190,249 @@ def test_conditional_win_probability_uses_highest_floor_reached():
 
     assert max(result) == 12
     assert 13 not in result
+
+
+def test_conditional_win_probability_filters_by_character():
+    runs = [
+        make_run(
+            victory=True,
+            floor_reached=10,
+            character="Silent",
+        ),
+        make_run(
+            victory=False,
+            floor_reached=10,
+            character="Silent",
+        ),
+        make_run(
+            victory=False,
+            floor_reached=10,
+            character="Ironclad",
+        ),
+    ]
+
+    result = calculate_conditional_win_probability(
+        runs,
+        character="Silent",
+    )
+
+    assert result[10].runs_reached == 2
+    assert result[10].wins == 1
+    assert result[10].win_probability == 0.5
+
+
+def test_conditional_win_probability_filters_by_ascension():
+    runs = [
+        make_run(
+            victory=True,
+            floor_reached=10,
+            ascension=0,
+        ),
+        make_run(
+            victory=False,
+            floor_reached=10,
+            ascension=0,
+        ),
+        make_run(
+            victory=True,
+            floor_reached=10,
+            ascension=10,
+        ),
+        make_run(
+            victory=True,
+            floor_reached=10,
+            ascension=10,
+        ),
+        make_run(
+            victory=False,
+            floor_reached=10,
+            ascension=10,
+        ),
+    ]
+
+    result = calculate_conditional_win_probability(
+        runs,
+        ascension=10,
+    )
+
+    assert result[10].runs_reached == 3
+    assert result[10].wins == 2
+    assert result[10].win_probability == 2 / 3
+
+
+def test_conditional_win_probability_filters_by_character_and_ascension():
+    runs = [
+        make_run(
+            victory=True,
+            floor_reached=10,
+            character="Silent",
+            ascension=10,
+        ),
+        make_run(
+            victory=False,
+            floor_reached=10,
+            character="Silent",
+            ascension=10,
+        ),
+        make_run(
+            victory=True,
+            floor_reached=10,
+            character="Silent",
+            ascension=5,
+        ),
+        make_run(
+            victory=True,
+            floor_reached=10,
+            character="Ironclad",
+            ascension=10,
+        ),
+    ]
+
+    result = calculate_conditional_win_probability(
+        runs,
+        character="Silent",
+        ascension=10,
+    )
+
+    assert result[10].runs_reached == 2
+    assert result[10].wins == 1
+    assert result[10].win_probability == 0.5
+
+
+def test_conditional_win_probability_filter_with_no_matching_runs():
+    runs = [
+        make_run(
+            victory=True,
+            floor_reached=10,
+            character="Silent",
+            ascension=0,
+        ),
+    ]
+
+    result = calculate_conditional_win_probability(
+        runs,
+        character="Defect",
+    )
+
+    assert result == {}
+
+
+def test_conditional_win_probability_by_character():
+    runs = [
+        make_run(
+            victory=True,
+            floor_reached=10,
+            character="Silent",
+        ),
+        make_run(
+            victory=False,
+            floor_reached=10,
+            character="Silent",
+        ),
+        make_run(
+            victory=True,
+            floor_reached=5,
+            character="Ironclad",
+        ),
+        make_run(
+            victory=False,
+            floor_reached=5,
+            character="Ironclad",
+        ),
+    ]
+
+    result = calculate_conditional_win_probability_by_character(runs)
+
+    assert set(result) == {"Silent", "Ironclad"}
+
+    assert result["Silent"][10].runs_reached == 2
+    assert result["Silent"][10].wins == 1
+    assert result["Silent"][10].win_probability == 0.5
+
+    assert result["Ironclad"][5].runs_reached == 2
+    assert result["Ironclad"][5].wins == 1
+    assert result["Ironclad"][5].win_probability == 0.5
+
+    assert 6 not in result["Ironclad"]
+
+
+def test_conditional_win_probability_by_character_and_ascension():
+    runs = [
+        make_run(
+            victory=True,
+            floor_reached=10,
+            character="Silent",
+            ascension=0,
+        ),
+        make_run(
+            victory=False,
+            floor_reached=10,
+            character="Silent",
+            ascension=0,
+        ),
+        make_run(
+            victory=True,
+            floor_reached=10,
+            character="Silent",
+            ascension=10,
+        ),
+        make_run(
+            victory=True,
+            floor_reached=10,
+            character="Silent",
+            ascension=10,
+        ),
+        make_run(
+            victory=False,
+            floor_reached=10,
+            character="Ironclad",
+            ascension=10,
+        ),
+    ]
+
+    result = calculate_conditional_win_probability_by_character_and_ascension(
+        runs
+    )
+
+    assert set(result) == {
+        ("Silent", 0),
+        ("Silent", 10),
+        ("Ironclad", 10),
+    }
+
+    assert result[("Silent", 0)][10].runs_reached == 2
+    assert result[("Silent", 0)][10].wins == 1
+    assert result[("Silent", 0)][10].win_probability == 0.5
+
+    assert result[("Silent", 10)][10].runs_reached == 2
+    assert result[("Silent", 10)][10].wins == 2
+    assert result[("Silent", 10)][10].win_probability == 1.0
+
+
+def test_conditional_win_probability_by_character_omits_empty_combinations():
+    runs = [
+        make_run(
+            victory=True,
+            floor_reached=10,
+            character="Silent",
+            ascension=0,
+        ),
+        make_run(
+            victory=True,
+            floor_reached=10,
+            character="Ironclad",
+            ascension=5,
+        ),
+    ]
+
+    result = calculate_conditional_win_probability_by_character_and_ascension(
+        runs
+    )
+
+    assert set(result) == {
+        ("Silent", 0),
+        ("Ironclad", 5),
+    }
+
+    assert ("Silent", 5) not in result
+    assert ("Ironclad", 0) not in result
