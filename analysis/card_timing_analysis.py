@@ -96,23 +96,26 @@ def calculate_card_acquisition_timing_statistics(
     statistics: dict[str, CardAcquisitionTimingStatistics] = {}
 
     for run in runs:
-        for acquisition in run.card_acquisitions:
-            if acquisition.card not in statistics:
-                statistics[acquisition.card] = CardAcquisitionTimingStatistics(
-                    card=acquisition.card
-                )
+        first_acquisition_floor: dict[str, int] = {}
 
-            stat = statistics[acquisition.card]
+        for acquisition in run.card_acquisitions:
+            if acquisition.card not in first_acquisition_floor:
+                first_acquisition_floor[acquisition.card] = acquisition.floor
+
+        for card, floor in first_acquisition_floor.items():
+            if card not in statistics:
+                statistics[card] = CardAcquisitionTimingStatistics(card=card)
+
+            stat = statistics[card]
 
             if run.metadata.victory:
                 stat.winning_runs += 1
-                stat.total_winning_acquisition_floors += acquisition.floor
+                stat.total_winning_acquisition_floors += floor
             else:
                 stat.losing_runs += 1
-                stat.total_losing_acquisition_floors += acquisition.floor
+                stat.total_losing_acquisition_floors += floor
 
     return statistics
-
 
 def calculate_card_choice_timing_statistics(
     runs: Iterable[RunData],
